@@ -141,7 +141,7 @@ const Hero = ({ selectedPlatform, setSelectedPlatform }) => {
                 variant={format === 'video' ? 'default' : 'outline'}
                 onClick={() => setFormat('video')}
                 className={`h-auto py-4 ${
-                  format === 'video' ? 'platform-gradient platform-glow border-0' : ''
+                  format === 'video' ? 'platform-gradient platform-glow border-0 text-white' : ''
                 }`}
               >
                 <Video className="w-5 h-5 mr-2" />
@@ -151,7 +151,7 @@ const Hero = ({ selectedPlatform, setSelectedPlatform }) => {
                 variant={format === 'mp3' ? 'default' : 'outline'}
                 onClick={() => setFormat('mp3')}
                 className={`h-auto py-4 ${
-                  format === 'mp3' ? 'platform-gradient platform-glow border-0' : ''
+                  format === 'mp3' ? 'platform-gradient platform-glow border-0 text-white' : ''
                 }`}
               >
                 <Music className="w-5 h-5 mr-2" />
