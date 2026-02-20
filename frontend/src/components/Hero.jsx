@@ -170,7 +170,7 @@ const Hero = ({ selectedPlatform, setSelectedPlatform }) => {
                     key={q}
                     variant={quality === q ? 'default' : 'outline'}
                     onClick={() => setQuality(q)}
-                    className={quality === q ? 'platform-gradient border-0' : ''}
+                    className={quality === q ? 'platform-gradient border-0 text-white' : ''}
                     size="sm"
                   >
                     {q === 'max' ? 'Máximo' : `${q} kbps`}
