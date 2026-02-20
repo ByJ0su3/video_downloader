@@ -184,7 +184,7 @@ const Hero = ({ selectedPlatform, setSelectedPlatform }) => {
           <Button 
             onClick={handleDownload}
             disabled={isProcessing}
-            className="w-full h-14 text-base font-semibold platform-gradient platform-glow border-0"
+            className="w-full h-14 text-base font-semibold platform-gradient platform-glow border-0 text-white"
           >
             {isProcessing ? (
               <>
