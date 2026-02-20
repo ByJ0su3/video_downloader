@@ -4,14 +4,14 @@ import { Download } from 'lucide-react';
 const Footer = ({ language }) => {
   const copy = {
     es: {
-      description: 'La forma mas rapida de descargar videos y convertir a MP3 desde tus plataformas favoritas.',
+      description: 'La forma más rápida de descargar videos y convertir a MP3 desde tus plataformas favoritas.',
       home: 'Inicio',
-      how: 'Como funciona',
+      how: 'Cómo funciona',
       platforms: 'Plataformas',
       faq: 'Preguntas',
-      privacy: 'Politica de privacidad',
+      privacy: 'Política de privacidad',
       contact: 'Contacto',
-      rights: '2026 LinkRip. Todos los derechos reservados.',
+      rights: '2026 @LinkRip - Todos los derechos reservados.',
     },
     en: {
       description: 'The fastest way to download videos and convert to MP3 from your favorite platforms.',
@@ -21,7 +21,7 @@ const Footer = ({ language }) => {
       faq: 'FAQ',
       privacy: 'Privacy policy',
       contact: 'Contact',
-      rights: '2026 LinkRip. All rights reserved.',
+      rights: '2026 @LinkRip - All rights reserved.',
     },
   };
 
@@ -33,7 +33,7 @@ const Footer = ({ language }) => {
         <div className="flex flex-col items-center text-center gap-5 mb-8">
           <div className="flex items-center space-x-2">
             <div className="w-8 h-8 rounded-lg platform-gradient flex items-center justify-center platform-glow">
-              <Download className="w-5 h-5 text-white" />
+              <Download className="w-5 h-5 text-[hsl(var(--on-platform))]" />
             </div>
             <span className="text-xl font-bold font-['Space_Grotesk']">LinkRip</span>
           </div>

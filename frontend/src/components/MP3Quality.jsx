@@ -5,19 +5,19 @@ import { Music, Gauge, Sparkles, Info } from 'lucide-react';
 
 const dataByLang = {
   es: {
-    title: 'MP3 en maxima calidad',
+    title: 'MP3 en máxima calidad',
     subtitle:
       'Convertimos a MP3 usando la mejor calidad disponible del enlace. Si el audio original es limitado, no se puede mejorar.',
-    explanationTitle: 'Que significa maxima calidad disponible?',
+    explanationTitle: '¿Qué significa máxima calidad disponible?',
     explanation:
-      'Extraemos audio en la mejor calidad que ofrezca la fuente original. Si el origen solo tiene 128 kbps, ese sera el maximo real.',
-    note: 'Por defecto, siempre intentamos obtener el maximo kbps posible',
+      'Extraemos audio en la mejor calidad que ofrezca la fuente original. Si el origen solo tiene 128 kbps, ese será el máximo real.',
+    note: 'Por defecto, siempre intentamos obtener el máximo kbps posible',
     cta: 'Convertir ahora',
     levels: [
-      { kbps: '128', quality: 'Estandar', description: 'Buena para podcasts', size: '~1MB/min' },
-      { kbps: '192', quality: 'Alta', description: 'Musica casual', size: '~1.4MB/min' },
+      { kbps: '128', quality: 'Estándar', description: 'Buena para podcasts', size: '~1MB/min' },
+      { kbps: '192', quality: 'Alta', description: 'Música casual', size: '~1.4MB/min' },
       { kbps: '256', quality: 'Muy alta', description: 'Audio detallado', size: '~2MB/min' },
-      { kbps: '320', quality: 'Premium', description: 'Maxima calidad estandar', size: '~2.4MB/min' },
+      { kbps: '320', quality: 'Premium', description: 'Máxima calidad estándar', size: '~2.4MB/min' },
     ],
   },
   en: {
@@ -50,7 +50,7 @@ const MP3Quality = ({ language }) => {
       <div className="container mx-auto max-w-6xl">
         <div className="text-center mb-16">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl platform-gradient platform-glow mb-6">
-            <Music className="w-8 h-8 text-white" />
+            <Music className="w-8 h-8 text-[hsl(var(--on-platform))]" />
           </div>
           <h2 className="text-3xl sm:text-4xl font-bold font-['Space_Grotesk'] mb-4">{t.title}</h2>
           <p className="text-lg text-muted-foreground max-w-3xl mx-auto">{t.subtitle}</p>

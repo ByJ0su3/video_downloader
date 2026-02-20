@@ -7,7 +7,7 @@ const Navbar = ({ language, setLanguage, theme, setTheme }) => {
 
   const copy = {
     es: {
-      how: 'Como funciona',
+      how: 'Cómo funciona',
       platforms: 'Plataformas',
       quality: 'Calidad MP3',
       faq: 'Preguntas',
@@ -40,7 +40,7 @@ const Navbar = ({ language, setLanguage, theme, setTheme }) => {
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center space-x-2">
             <div className="w-8 h-8 rounded-lg platform-gradient flex items-center justify-center platform-glow">
-              <Download className="w-5 h-5 text-white" />
+              <Download className="w-5 h-5 text-[hsl(var(--on-platform))]" />
             </div>
             <span className="text-xl font-bold font-['Space_Grotesk'] text-foreground">LinkRip</span>
           </div>

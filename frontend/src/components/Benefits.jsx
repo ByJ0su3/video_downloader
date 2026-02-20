@@ -4,14 +4,14 @@ import { Zap, Palette, Grid3x3, Shield, Smartphone, FileCheck } from 'lucide-rea
 
 const dataByLang = {
   es: {
-    title: 'Por que elegir LinkRip?',
-    subtitle: 'La forma mas simple y efectiva de descargar contenido',
+    title: '¿Por qué elegir LinkRip?',
+    subtitle: 'La forma más simple y efectiva de descargar contenido',
     items: [
-      { icon: Zap, title: 'Super rapido', description: 'Descarga en segundos, sin esperas innecesarias.' },
-      { icon: Palette, title: 'Interfaz limpia', description: 'Diseno moderno y claro para cada plataforma.' },
-      { icon: Grid3x3, title: 'Multiples formatos', description: 'Video con varias calidades y audio MP3 optimizado.' },
+      { icon: Zap, title: 'Súper rápido', description: 'Descarga en segundos, sin esperas innecesarias.' },
+      { icon: Palette, title: 'Interfaz limpia', description: 'Diseño moderno y claro para cada plataforma.' },
+      { icon: Grid3x3, title: 'Múltiples formatos', description: 'Video con varias calidades y audio MP3 optimizado.' },
       { icon: Shield, title: 'Descargas seguras', description: 'Tu privacidad y seguridad son prioridad.' },
-      { icon: Smartphone, title: 'Optimizado movil', description: 'Funciona en desktop y celular sin friccion.' },
+      { icon: Smartphone, title: 'Optimizado móvil', description: 'Funciona en desktop y celular sin fricción.' },
       { icon: FileCheck, title: 'Sin registro', description: 'No necesitas cuenta. Pega el link y descarga.' },
     ],
   },

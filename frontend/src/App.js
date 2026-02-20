@@ -17,11 +17,7 @@ function App() {
   useEffect(() => {
     // Apply platform theme to body
     const body = document.body;
-    if (selectedPlatform && selectedPlatform !== 'auto') {
-      body.setAttribute('data-platform', selectedPlatform);
-    } else {
-      body.removeAttribute('data-platform');
-    }
+    body.setAttribute('data-platform', selectedPlatform || 'auto');
   }, [selectedPlatform]);
 
   useEffect(() => {

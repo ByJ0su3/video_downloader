@@ -43,6 +43,7 @@ code {
         --platform-primary: 210 20% 98%;
         --platform-secondary: 217 33% 12%;
         --platform-glow: 210 20% 98%;
+        --on-platform: 0 0% 100%;
         
         /* Gradients */
         --gradient-platform-start: 222 47% 6%;
@@ -76,6 +77,10 @@ code {
         --gradient-platform-start: 217 38% 96%;
         --gradient-platform-end: 220 30% 92%;
         --shadow-elegant: 0 16px 40px -18px hsl(220 25% 30% / 0.24);
+    }
+
+    [data-theme="light"][data-platform="auto"] {
+        --on-platform: 222 47% 11%;
     }
 
     /* YouTube Theme */

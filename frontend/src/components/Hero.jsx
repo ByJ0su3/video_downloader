@@ -17,27 +17,27 @@ const platforms = [
 
 const textByLang = {
   es: {
-    badge: 'Rapido, seguro y sin limites',
+    badge: 'Rápido, seguro y sin límites',
     title: 'Descarga videos o convierte a',
-    titleAccent: 'MP3 en maxima calidad',
+    titleAccent: 'MP3 en máxima calidad',
     subtitle: 'Pega un link de YouTube, Twitter, Instagram, Twitch o TikTok y descarga en segundos.',
-    inputPlaceholder: 'Pega aqui tu enlace de video (ej: https://youtube.com/watch?v=...)',
+    inputPlaceholder: 'Pega aquí tu enlace de video...',
     platform: 'Plataforma',
     auto: 'Auto',
     format: 'Formato',
     video: 'Video',
-    mp3: 'MP3 Audio',
+    mp3: 'Audio MP3',
     audioQuality: 'Calidad de audio',
     videoQuality: 'Calidad de video',
     videoFps: 'FPS',
-    max: 'Maximo',
+    max: 'Máximo',
     best: 'Mejor disponible',
     sourceFps: 'FPS original',
     processing: 'Procesando...',
     download: 'Descargar',
-    note: 'Respetamos los limites de cada fuente. La calidad depende del audio/video original.',
-    urlRequired: 'Por favor ingresa un enlace',
-    platformRequired: 'No pudimos detectar la plataforma. Seleccionala manualmente.',
+    note: 'Respetamos los límites de cada fuente. La calidad depende del audio/video original.',
+    urlRequired: 'Por favor, ingresa un enlace',
+    platformRequired: 'No pudimos detectar la plataforma. Selecciónala manualmente.',
     platformDetected: 'Plataforma detectada',
     pasteOk: 'Enlace pegado desde portapapeles',
     pasteError: 'No se pudo leer el portapapeles',
@@ -50,7 +50,7 @@ const textByLang = {
     title: 'Download videos or convert to',
     titleAccent: 'MP3 in highest quality',
     subtitle: 'Paste a YouTube, Twitter, Instagram, Twitch or TikTok link and download in seconds.',
-    inputPlaceholder: 'Paste your video link here (ex: https://youtube.com/watch?v=...)',
+    inputPlaceholder: 'Paste your video link here...',
     platform: 'Platform',
     auto: 'Auto',
     format: 'Format',
@@ -120,13 +120,15 @@ const Hero = ({ selectedPlatform, setSelectedPlatform, language }) => {
       if (!clipboardText) {
         return;
       }
+
       setUrl(clipboardText);
       const detected = detectPlatform(clipboardText);
       if (detected) {
         setSelectedPlatform(detected);
       }
+
       toast.success(t.pasteOk);
-    } catch (error) {
+    } catch {
       toast.error(t.pasteError);
     }
   };
@@ -148,7 +150,10 @@ const Hero = ({ selectedPlatform, setSelectedPlatform, language }) => {
       const summary =
         format === 'mp3'
           ? t.audioSummary(audioQuality === 'max' ? t.max : `${audioQuality} kbps`)
-          : t.videoSummary(videoQuality === 'best' ? t.best : videoQuality, videoFps === 'source' ? t.sourceFps : `${videoFps} FPS`);
+          : t.videoSummary(
+              videoQuality === 'best' ? t.best : videoQuality,
+              videoFps === 'source' ? t.sourceFps : `${videoFps} FPS`,
+            );
 
       toast.success(t.ready, { description: summary });
       setIsProcessing(false);
@@ -161,18 +166,16 @@ const Hero = ({ selectedPlatform, setSelectedPlatform, language }) => {
 
       <div className="container mx-auto max-w-6xl relative z-10">
         <div className="text-center mb-12">
-          <Badge className="mb-4 platform-gradient platform-glow border-0 px-4 py-1 text-white">
-            <Sparkles className="w-3 h-3 mr-1 text-white" />
-            <span className="text-white">{t.badge}</span>
+          <Badge className="mb-4 platform-gradient platform-glow border-0 px-4 py-1 text-[hsl(var(--on-platform))]">
+            <Sparkles className="w-3 h-3 mr-1 text-[hsl(var(--on-platform))]" />
+            <span className="text-[hsl(var(--on-platform))]">{t.badge}</span>
           </Badge>
 
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold font-['Space_Grotesk'] mb-6 leading-tight">
             {t.title} <span className="text-gradient">{t.titleAccent}</span>
           </h1>
 
-          <p className="text-lg sm:text-xl text-muted-foreground max-w-3xl mx-auto mb-8">
-            {t.subtitle}
-          </p>
+          <p className="text-lg sm:text-xl text-muted-foreground max-w-3xl mx-auto mb-8">{t.subtitle}</p>
         </div>
 
         <Card className="glass-effect platform-glow border-border/50 p-6 sm:p-8 max-w-4xl mx-auto">
@@ -189,7 +192,7 @@ const Hero = ({ selectedPlatform, setSelectedPlatform, language }) => {
               <button
                 type="button"
                 onClick={handlePaste}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-white fast-transition"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground fast-transition"
                 aria-label="Paste"
               >
                 <ClipboardPaste className="w-5 h-5" />
@@ -198,13 +201,13 @@ const Hero = ({ selectedPlatform, setSelectedPlatform, language }) => {
           </div>
 
           <div className="mb-6">
-            <label className="text-sm font-medium mb-3 block text-white">{t.platform}</label>
+            <label className="text-sm font-medium mb-3 block text-foreground">{t.platform}</label>
             <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
               <Button
                 variant={selectedPlatform === 'auto' ? 'default' : 'outline'}
                 onClick={() => setSelectedPlatform('auto')}
                 className={`h-auto py-3 flex flex-col items-center gap-1 ${
-                  selectedPlatform === 'auto' ? 'platform-gradient platform-glow border-0 text-white' : ''
+                  selectedPlatform === 'auto' ? 'platform-gradient platform-glow border-0 text-[hsl(var(--on-platform))]' : ''
                 }`}
               >
                 <Sparkles className="w-5 h-5" />
@@ -218,7 +221,7 @@ const Hero = ({ selectedPlatform, setSelectedPlatform, language }) => {
                     variant={selectedPlatform === platform.id ? 'default' : 'outline'}
                     onClick={() => setSelectedPlatform(platform.id)}
                     className={`h-auto py-3 flex flex-col items-center gap-1 ${
-                      selectedPlatform === platform.id ? 'platform-gradient platform-glow border-0 text-white' : ''
+                      selectedPlatform === platform.id ? 'platform-gradient platform-glow border-0 text-[hsl(var(--on-platform))]' : ''
                     }`}
                   >
                     <Icon className="w-5 h-5" />
@@ -230,12 +233,16 @@ const Hero = ({ selectedPlatform, setSelectedPlatform, language }) => {
           </div>
 
           <div className="mb-6">
-            <label className="text-sm font-medium mb-3 block text-white">{t.format}</label>
+            <label className="text-sm font-medium mb-3 block text-foreground">{t.format}</label>
             <div className="grid grid-cols-2 gap-3">
               <Button
                 variant={format === 'video' ? 'default' : 'outline'}
                 onClick={() => setFormat('video')}
-                className={format === 'video' ? 'h-auto py-4 platform-gradient platform-glow border-0 text-white' : 'h-auto py-4'}
+                className={
+                  format === 'video'
+                    ? 'h-auto py-4 platform-gradient platform-glow border-0 text-[hsl(var(--on-platform))]'
+                    : 'h-auto py-4'
+                }
               >
                 <Video className="w-5 h-5 mr-2" />
                 {t.video}
@@ -243,7 +250,11 @@ const Hero = ({ selectedPlatform, setSelectedPlatform, language }) => {
               <Button
                 variant={format === 'mp3' ? 'default' : 'outline'}
                 onClick={() => setFormat('mp3')}
-                className={format === 'mp3' ? 'h-auto py-4 platform-gradient platform-glow border-0 text-white' : 'h-auto py-4'}
+                className={
+                  format === 'mp3'
+                    ? 'h-auto py-4 platform-gradient platform-glow border-0 text-[hsl(var(--on-platform))]'
+                    : 'h-auto py-4'
+                }
               >
                 <Music className="w-5 h-5 mr-2" />
                 {t.mp3}
@@ -253,14 +264,14 @@ const Hero = ({ selectedPlatform, setSelectedPlatform, language }) => {
 
           {format === 'mp3' && (
             <div className="mb-6">
-              <label className="text-sm font-medium mb-3 block text-white">{t.audioQuality}</label>
+              <label className="text-sm font-medium mb-3 block text-foreground">{t.audioQuality}</label>
               <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
                 {['128', '192', '256', '320', 'max'].map((q) => (
                   <Button
                     key={q}
                     variant={audioQuality === q ? 'default' : 'outline'}
                     onClick={() => setAudioQuality(q)}
-                    className={audioQuality === q ? 'platform-gradient border-0 text-white' : ''}
+                    className={audioQuality === q ? 'platform-gradient border-0 text-[hsl(var(--on-platform))]' : ''}
                     size="sm"
                   >
                     {q === 'max' ? t.max : `${q} kbps`}
@@ -273,14 +284,14 @@ const Hero = ({ selectedPlatform, setSelectedPlatform, language }) => {
           {format === 'video' && (
             <div className="mb-6 space-y-4">
               <div>
-                <label className="text-sm font-medium mb-3 block text-white">{t.videoQuality}</label>
+                <label className="text-sm font-medium mb-3 block text-foreground">{t.videoQuality}</label>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   {videoQualities.map((q) => (
                     <Button
                       key={q}
                       variant={videoQuality === q ? 'default' : 'outline'}
                       onClick={() => setVideoQuality(q)}
-                      className={videoQuality === q ? 'platform-gradient border-0 text-white' : ''}
+                      className={videoQuality === q ? 'platform-gradient border-0 text-[hsl(var(--on-platform))]' : ''}
                       size="sm"
                     >
                       {q === 'best' ? t.best : q}
@@ -290,14 +301,14 @@ const Hero = ({ selectedPlatform, setSelectedPlatform, language }) => {
               </div>
 
               <div>
-                <label className="text-sm font-medium mb-3 block text-white">{t.videoFps}</label>
+                <label className="text-sm font-medium mb-3 block text-foreground">{t.videoFps}</label>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   {videoFpsOptions.map((fps) => (
                     <Button
                       key={fps}
                       variant={videoFps === fps ? 'default' : 'outline'}
                       onClick={() => setVideoFps(fps)}
-                      className={videoFps === fps ? 'platform-gradient border-0 text-white' : ''}
+                      className={videoFps === fps ? 'platform-gradient border-0 text-[hsl(var(--on-platform))]' : ''}
                       size="sm"
                     >
                       {fps === 'source' ? t.sourceFps : `${fps} FPS`}
@@ -311,11 +322,11 @@ const Hero = ({ selectedPlatform, setSelectedPlatform, language }) => {
           <Button
             onClick={handleDownload}
             disabled={isProcessing}
-            className="w-full h-14 text-base font-semibold platform-gradient platform-glow border-0 text-white"
+            className="w-full h-14 text-base font-semibold platform-gradient platform-glow border-0 text-[hsl(var(--on-platform))]"
           >
             {isProcessing ? (
               <>
-                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
+                <div className="w-5 h-5 border-2 border-[hsl(var(--on-platform)/0.35)] border-t-[hsl(var(--on-platform))] rounded-full animate-spin mr-2" />
                 {t.processing}
               </>
             ) : (
@@ -326,9 +337,7 @@ const Hero = ({ selectedPlatform, setSelectedPlatform, language }) => {
             )}
           </Button>
 
-          <p className="text-xs text-muted-foreground text-center mt-4">
-            {t.note}
-          </p>
+          <p className="text-xs text-muted-foreground text-center mt-4">{t.note}</p>
         </Card>
       </div>
     </section>

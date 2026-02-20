@@ -5,7 +5,7 @@ import { Link2, MousePointerClick, Download } from 'lucide-react';
 const HowItWorks = ({ language }) => {
   const copy = {
     es: {
-      title: 'Como funciona',
+      title: 'Cómo funciona',
       subtitle: 'Tres pasos simples para descargar tus videos favoritos',
       step: 'Paso',
       steps: [
@@ -22,7 +22,7 @@ const HowItWorks = ({ language }) => {
         {
           icon: Download,
           title: 'Descarga',
-          description: 'Haz clic en descargar y obten tu archivo en segundos.',
+          description: 'Haz clic en descargar y obtén tu archivo en segundos.',
         },
       ],
     },
@@ -69,7 +69,7 @@ const HowItWorks = ({ language }) => {
                 className="glass-effect border-border/50 p-8 text-center hover:scale-105 smooth-transition group"
               >
                 <div className="w-16 h-16 mx-auto mb-6 rounded-2xl platform-gradient platform-glow flex items-center justify-center group-hover:scale-110 smooth-transition">
-                  <Icon className="w-8 h-8 text-white" />
+                  <Icon className="w-8 h-8 text-[hsl(var(--on-platform))]" />
                 </div>
                 <div className="mb-2 text-sm font-semibold text-muted-foreground">
                   {t.step} {index + 1}

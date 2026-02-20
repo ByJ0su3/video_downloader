@@ -6,13 +6,13 @@ import { CheckCircle2 } from 'lucide-react';
 const dataByLang = {
   es: {
     title: 'Plataformas soportadas',
-    subtitle: 'Descarga contenido de las plataformas mas populares',
+    subtitle: 'Descarga contenido de las plataformas más populares',
     cards: [
       {
         id: 'youtube',
         name: 'YouTube',
         icon: FaYoutube,
-        description: 'Videos, shorts y mas',
+        description: 'Videos, shorts y más',
         features: ['Videos completos', 'Shorts', 'Calidad hasta 4K'],
       },
       {
@@ -113,7 +113,7 @@ const Platforms = ({ setSelectedPlatform, language }) => {
               >
                 <div className="flex items-start space-x-4 mb-4">
                   <div className="w-12 h-12 rounded-xl platform-gradient platform-glow flex items-center justify-center group-hover:scale-110 smooth-transition flex-shrink-0">
-                    <Icon className="w-6 h-6 text-white" />
+                    <Icon className="w-6 h-6 text-[hsl(var(--on-platform))]" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="text-lg font-bold font-['Space_Grotesk'] mb-1">{platform.name}</h3>

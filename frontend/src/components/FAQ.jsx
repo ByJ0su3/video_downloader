@@ -12,36 +12,36 @@ const dataByLang = {
     subtitle: 'Todo lo que necesitas saber sobre LinkRip',
     faqs: [
       {
-        question: 'Funciona con reels y stories de Instagram?',
-        answer: 'Si, puedes descargar reels, stories y posts de video. Solo necesitas el enlace.',
+        question: '¿Funciona con reels y stories de Instagram?',
+        answer: 'Sí, puedes descargar reels, stories y posts de video. Solo necesitas el enlace.',
       },
       {
-        question: 'Que significa maximo kbps?',
-        answer: 'Kbps mide calidad de audio. Mas kbps significa mejor audio dentro del limite de la fuente.',
+        question: '¿Qué significa máximo kbps?',
+        answer: 'Kbps mide calidad de audio. Más kbps significa mejor audio dentro del límite de la fuente.',
       },
       {
-        question: 'Por que a veces no sale 320 kbps?',
-        answer: 'La calidad maxima depende del audio original del video. No se puede inventar calidad.',
+        question: '¿Por qué a veces no sale 320 kbps?',
+        answer: 'La calidad máxima depende del audio original del video. No se puede inventar calidad.',
       },
       {
-        question: 'Se guarda mi link o informacion?',
+        question: '¿Se guarda mi link o información?',
         answer: 'No guardamos enlaces ni actividad personal. El procesamiento es temporal.',
       },
       {
-        question: 'Que plataformas soporta?',
+        question: '¿Qué plataformas soporta?',
         answer: 'YouTube, Twitter/X, Instagram, Twitch y TikTok.',
       },
       {
-        question: 'Por que algunos links no funcionan?',
-        answer: 'Algunos videos son privados, bloqueados por region o tienen restricciones de copyright.',
+        question: '¿Por qué algunos links no funcionan?',
+        answer: 'Algunos videos son privados, bloqueados por región o tienen restricciones de copyright.',
       },
       {
-        question: 'Es legal descargar videos?',
-        answer: 'Debes respetar derechos de autor y terminos de cada plataforma.',
+        question: '¿Es legal descargar videos?',
+        answer: 'Debes respetar derechos de autor y términos de cada plataforma.',
       },
       {
-        question: 'Tiene limites de descarga?',
-        answer: 'No hay limites estrictos por ahora, pero el uso debe ser razonable.',
+        question: '¿Tiene límites de descarga?',
+        answer: 'No hay límites estrictos por ahora, pero el uso debe ser razonable.',
       },
     ],
   },
