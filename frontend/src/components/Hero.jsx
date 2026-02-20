@@ -122,7 +122,7 @@ const Hero = ({ selectedPlatform, setSelectedPlatform }) => {
                     variant={selectedPlatform === platform.id ? 'default' : 'outline'}
                     onClick={() => setSelectedPlatform(platform.id)}
                     className={`h-auto py-3 flex flex-col items-center gap-1 ${
-                      selectedPlatform === platform.id ? 'platform-gradient platform-glow border-0' : ''
+                      selectedPlatform === platform.id ? 'platform-gradient platform-glow border-0 text-white' : ''
                     }`}
                   >
                     <Icon className="w-5 h-5" />
