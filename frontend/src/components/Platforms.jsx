@@ -1,61 +1,106 @@
-import React from 'react';
+﻿import React from 'react';
 import { Card } from './ui/card';
 import { FaYoutube, FaTwitter, FaInstagram, FaTwitch, FaTiktok } from 'react-icons/fa';
 import { CheckCircle2 } from 'lucide-react';
 
-const platformsData = [
-  {
-    id: 'youtube',
-    name: 'YouTube',
-    icon: FaYoutube,
-    description: 'Videos, shorts y más',
-    features: ['Videos completos', 'Shorts', 'Calidad hasta 4K'],
+const dataByLang = {
+  es: {
+    title: 'Plataformas soportadas',
+    subtitle: 'Descarga contenido de las plataformas mas populares',
+    cards: [
+      {
+        id: 'youtube',
+        name: 'YouTube',
+        icon: FaYoutube,
+        description: 'Videos, shorts y mas',
+        features: ['Videos completos', 'Shorts', 'Calidad hasta 4K'],
+      },
+      {
+        id: 'twitter',
+        name: 'Twitter/X',
+        icon: FaTwitter,
+        description: 'Tweets con video',
+        features: ['Videos de tweets', 'Videos de respuestas', 'GIFs animados'],
+      },
+      {
+        id: 'instagram',
+        name: 'Instagram',
+        icon: FaInstagram,
+        description: 'Reels, stories y posts',
+        features: ['Reels', 'Stories', 'Posts de video'],
+      },
+      {
+        id: 'twitch',
+        name: 'Twitch',
+        icon: FaTwitch,
+        description: 'Clips y VODs',
+        features: ['Clips', 'VODs', 'Highlights'],
+      },
+      {
+        id: 'tiktok',
+        name: 'TikTok',
+        icon: FaTiktok,
+        description: 'Videos sin marca de agua',
+        features: ['Videos completos', 'Sin watermark', 'Calidad original'],
+      },
+    ],
   },
-  {
-    id: 'twitter',
-    name: 'Twitter/X',
-    icon: FaTwitter,
-    description: 'Tweets con video',
-    features: ['Videos de tweets', 'Videos de respuestas', 'GIFs animados'],
+  en: {
+    title: 'Supported platforms',
+    subtitle: 'Download content from the most popular platforms',
+    cards: [
+      {
+        id: 'youtube',
+        name: 'YouTube',
+        icon: FaYoutube,
+        description: 'Videos, shorts and more',
+        features: ['Full videos', 'Shorts', 'Up to 4K quality'],
+      },
+      {
+        id: 'twitter',
+        name: 'Twitter/X',
+        icon: FaTwitter,
+        description: 'Tweets with video',
+        features: ['Tweet videos', 'Reply videos', 'Animated GIFs'],
+      },
+      {
+        id: 'instagram',
+        name: 'Instagram',
+        icon: FaInstagram,
+        description: 'Reels, stories and posts',
+        features: ['Reels', 'Stories', 'Video posts'],
+      },
+      {
+        id: 'twitch',
+        name: 'Twitch',
+        icon: FaTwitch,
+        description: 'Clips and VODs',
+        features: ['Clips', 'VODs', 'Highlights'],
+      },
+      {
+        id: 'tiktok',
+        name: 'TikTok',
+        icon: FaTiktok,
+        description: 'Videos without watermark',
+        features: ['Full videos', 'No watermark', 'Original quality'],
+      },
+    ],
   },
-  {
-    id: 'instagram',
-    name: 'Instagram',
-    icon: FaInstagram,
-    description: 'Reels, stories y posts',
-    features: ['Reels', 'Stories', 'Posts de video'],
-  },
-  {
-    id: 'twitch',
-    name: 'Twitch',
-    icon: FaTwitch,
-    description: 'Clips y VODs',
-    features: ['Clips', 'VODs', 'Highlights'],
-  },
-  {
-    id: 'tiktok',
-    name: 'TikTok',
-    icon: FaTiktok,
-    description: 'Videos sin marca de agua',
-    features: ['Videos completos', 'Sin watermark', 'Calidad original'],
-  },
-];
+};
 
-const Platforms = ({ setSelectedPlatform }) => {
+const Platforms = ({ setSelectedPlatform, language }) => {
+  const t = dataByLang[language];
+
   return (
     <section id="platforms" className="py-20 px-4 sm:px-6 lg:px-8">
       <div className="container mx-auto max-w-6xl">
         <div className="text-center mb-16">
-          <h2 className="text-3xl sm:text-4xl font-bold font-['Space_Grotesk'] mb-4">
-            Plataformas soportadas
-          </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Descarga contenido de las plataformas más populares
-          </p>
+          <h2 className="text-3xl sm:text-4xl font-bold font-['Space_Grotesk'] mb-4">{t.title}</h2>
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">{t.subtitle}</p>
         </div>
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {platformsData.map((platform) => {
+          {t.cards.map((platform) => {
             const Icon = platform.icon;
             return (
               <Card
@@ -71,12 +116,8 @@ const Platforms = ({ setSelectedPlatform }) => {
                     <Icon className="w-6 h-6 text-white" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className="text-lg font-bold font-['Space_Grotesk'] mb-1">
-                      {platform.name}
-                    </h3>
-                    <p className="text-sm text-muted-foreground">
-                      {platform.description}
-                    </p>
+                    <h3 className="text-lg font-bold font-['Space_Grotesk'] mb-1">{platform.name}</h3>
+                    <p className="text-sm text-muted-foreground">{platform.description}</p>
                   </div>
                 </div>
                 <ul className="space-y-2">

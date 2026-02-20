@@ -55,6 +55,29 @@ code {
         --transition-fast: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
+    [data-theme="light"] {
+        --background: 210 40% 98%;
+        --foreground: 222 47% 11%;
+        --card: 0 0% 100%;
+        --card-foreground: 222 47% 11%;
+        --popover: 0 0% 100%;
+        --popover-foreground: 222 47% 11%;
+        --primary: 222 47% 11%;
+        --primary-foreground: 210 40% 98%;
+        --secondary: 210 40% 96%;
+        --secondary-foreground: 222 47% 11%;
+        --muted: 210 40% 96%;
+        --muted-foreground: 220 16% 40%;
+        --accent: 210 40% 96%;
+        --accent-foreground: 222 47% 11%;
+        --border: 214 32% 88%;
+        --input: 214 32% 88%;
+        --ring: 222 47% 11%;
+        --gradient-platform-start: 217 38% 96%;
+        --gradient-platform-end: 220 30% 92%;
+        --shadow-elegant: 0 16px 40px -18px hsl(220 25% 30% / 0.24);
+    }
+
     /* YouTube Theme */
     [data-platform="youtube"] {
         --platform-primary: 0 100% 50%;

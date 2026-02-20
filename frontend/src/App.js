@@ -11,6 +11,8 @@ import Footer from './components/Footer';
 
 function App() {
   const [selectedPlatform, setSelectedPlatform] = useState('auto');
+  const [language, setLanguage] = useState('es');
+  const [theme, setTheme] = useState('dark');
 
   useEffect(() => {
     // Apply platform theme to body
@@ -22,19 +24,29 @@ function App() {
     }
   }, [selectedPlatform]);
 
+  useEffect(() => {
+    document.body.setAttribute('data-theme', theme);
+  }, [theme]);
+
   return (
     <div className="min-h-screen bg-background smooth-transition">
-      <Navbar />
+      <Navbar
+        language={language}
+        setLanguage={setLanguage}
+        theme={theme}
+        setTheme={setTheme}
+      />
       <Hero 
         selectedPlatform={selectedPlatform} 
-        setSelectedPlatform={setSelectedPlatform} 
+        setSelectedPlatform={setSelectedPlatform}
+        language={language}
       />
-      <HowItWorks />
-      <Platforms setSelectedPlatform={setSelectedPlatform} />
-      <MP3Quality />
-      <Benefits />
-      <FAQ />
-      <Footer />
+      <HowItWorks language={language} />
+      <Platforms setSelectedPlatform={setSelectedPlatform} language={language} />
+      <MP3Quality language={language} />
+      <Benefits language={language} />
+      <FAQ language={language} />
+      <Footer language={language} />
       <Toaster />
     </div>
   );

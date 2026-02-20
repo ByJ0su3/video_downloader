@@ -1,9 +1,30 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Button } from './ui/button';
-import { Menu, X, Download } from 'lucide-react';
+import { Menu, X, Download, Sun, Moon } from 'lucide-react';
 
-const Navbar = () => {
+const Navbar = ({ language, setLanguage, theme, setTheme }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const copy = {
+    es: {
+      how: 'Como funciona',
+      platforms: 'Plataformas',
+      quality: 'Calidad MP3',
+      faq: 'Preguntas',
+      lang: 'ES',
+      theme: 'Tema',
+    },
+    en: {
+      how: 'How it works',
+      platforms: 'Platforms',
+      quality: 'MP3 Quality',
+      faq: 'FAQ',
+      lang: 'EN',
+      theme: 'Theme',
+    },
+  };
+
+  const t = copy[language];
 
   const scrollToSection = (id) => {
     const element = document.getElementById(id);
@@ -17,7 +38,6 @@ const Navbar = () => {
     <nav className="fixed top-0 left-0 right-0 z-50 glass-effect border-b border-border/50">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          {/* Logo */}
           <div className="flex items-center space-x-2">
             <div className="w-8 h-8 rounded-lg platform-gradient flex items-center justify-center platform-glow">
               <Download className="w-5 h-5 text-white" />
@@ -25,42 +45,50 @@ const Navbar = () => {
             <span className="text-xl font-bold font-['Space_Grotesk'] text-foreground">LinkRip</span>
           </div>
 
-          {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-6">
-            <button 
+            <button
               onClick={() => scrollToSection('how-it-works')}
               className="text-sm text-muted-foreground hover:text-foreground fast-transition"
             >
-              Cómo funciona
+              {t.how}
             </button>
-            <button 
+            <button
               onClick={() => scrollToSection('platforms')}
               className="text-sm text-muted-foreground hover:text-foreground fast-transition"
             >
-              Plataformas
+              {t.platforms}
             </button>
-            <button 
+            <button
               onClick={() => scrollToSection('mp3-quality')}
               className="text-sm text-muted-foreground hover:text-foreground fast-transition"
             >
-              Calidad MP3
+              {t.quality}
             </button>
-            <button 
+            <button
               onClick={() => scrollToSection('faq')}
               className="text-sm text-muted-foreground hover:text-foreground fast-transition"
             >
-              Preguntas
+              {t.faq}
             </button>
-            <Button 
-              onClick={() => scrollToSection('hero')}
-              className="platform-gradient platform-glow"
+            <Button
+              variant="outline"
               size="sm"
+              onClick={() => setLanguage(language === 'es' ? 'en' : 'es')}
+              className="text-foreground"
             >
-              Probar ahora
+              {t.lang}
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+              className="text-foreground"
+              aria-label={t.theme}
+            >
+              {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </Button>
           </div>
 
-          {/* Mobile menu button */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className="md:hidden text-foreground"
@@ -70,40 +98,52 @@ const Navbar = () => {
         </div>
       </div>
 
-      {/* Mobile Navigation */}
       {mobileMenuOpen && (
         <div className="md:hidden glass-effect border-t border-border/50">
           <div className="px-4 py-4 space-y-3">
-            <button 
+            <button
               onClick={() => scrollToSection('how-it-works')}
               className="block w-full text-left text-sm text-muted-foreground hover:text-foreground fast-transition py-2"
             >
-              Cómo funciona
+              {t.how}
             </button>
-            <button 
+            <button
               onClick={() => scrollToSection('platforms')}
               className="block w-full text-left text-sm text-muted-foreground hover:text-foreground fast-transition py-2"
             >
-              Plataformas
+              {t.platforms}
             </button>
-            <button 
+            <button
               onClick={() => scrollToSection('mp3-quality')}
               className="block w-full text-left text-sm text-muted-foreground hover:text-foreground fast-transition py-2"
             >
-              Calidad MP3
+              {t.quality}
             </button>
-            <button 
+            <button
               onClick={() => scrollToSection('faq')}
               className="block w-full text-left text-sm text-muted-foreground hover:text-foreground fast-transition py-2"
             >
-              Preguntas
+              {t.faq}
             </button>
-            <Button 
-              onClick={() => scrollToSection('hero')}
-              className="w-full platform-gradient platform-glow"
-            >
-              Probar ahora
-            </Button>
+            <div className="flex items-center gap-2 pt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setLanguage(language === 'es' ? 'en' : 'es')}
+                className="text-foreground"
+              >
+                {t.lang}
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                className="text-foreground"
+                aria-label={t.theme}
+              >
+                {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+              </Button>
+            </div>
           </div>
         </div>
       )}
