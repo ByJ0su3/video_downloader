@@ -136,7 +136,10 @@ function resolveFfmpegArgs() {
   return ["--ffmpeg-location", ffmpegPath];
 }
 
-function getCommonHeaders(platform) {
+function getCommonHeaders(platform, cookiesMode) {
+  if (platform === "youtube" && cookiesMode !== "none") {
+    return [];
+  }
   const rule = PLATFORM_RULES[platform];
   const base = [
     "--add-header",
@@ -277,7 +280,7 @@ async function readProducedFile(tempDir, type) {
 }
 
 function buildYtDlpArgs(job) {
-  const { url, platform, type, playlist } = job.payload;
+  const { url, platform, type, playlist, cookiesMode } = job.payload;
   const outputTemplate = path.join(job.tempDir, "%(title).180B.%(ext)s");
 
   const args = [
@@ -289,7 +292,7 @@ function buildYtDlpArgs(job) {
     "--fragment-retries",
     "6",
     ...resolveFfmpegArgs(),
-    ...getCommonHeaders(platform),
+    ...getCommonHeaders(platform, cookiesMode),
     ...getPlatformExtractorArgs(platform),
     ...(playlist ? [] : ["--no-playlist"]),
     "-o",
