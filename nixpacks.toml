@@ -1,0 +1,8 @@
+[phases.setup]
+aptPkgs = ["ffmpeg", "yt-dlp"]
+
+[phases.install]
+cmds = ["cd backend && npm install"]
+
+[start]
+cmd = "cd backend && npm start"
