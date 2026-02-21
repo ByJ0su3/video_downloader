@@ -101,7 +101,6 @@ const Hero = ({ selectedPlatform, setSelectedPlatform, language }) => {
   const [videoQuality, setVideoQuality] = useState('best');
   const [videoFps, setVideoFps] = useState('source');
   const [isProcessing, setIsProcessing] = useState(false);
-  const [progressValue, setProgressValue] = useState(0);
   const [processingLabel, setProcessingLabel] = useState('');
 
   const t = textByLang[language];
@@ -162,7 +161,6 @@ const Hero = ({ selectedPlatform, setSelectedPlatform, language }) => {
     }
 
     setIsProcessing(true);
-    setProgressValue(0);
     setProcessingLabel(t.processingQueued);
 
     try {
@@ -218,7 +216,6 @@ const Hero = ({ selectedPlatform, setSelectedPlatform, language }) => {
         }
         // eslint-disable-next-line no-await-in-loop
         const statusData = await statusResponse.json();
-        setProgressValue(Math.max(0, Math.min(100, statusData.progress || 0)));
         setProcessingLabel(stageLabelById[statusData.stage] || t.processing);
 
         if (statusData.status === 'error') {
@@ -251,7 +248,6 @@ const Hero = ({ selectedPlatform, setSelectedPlatform, language }) => {
       toast.error(error?.message || t.downloadError);
     } finally {
       setIsProcessing(false);
-      setProgressValue(0);
       setProcessingLabel('');
     }
   };
@@ -434,17 +430,6 @@ const Hero = ({ selectedPlatform, setSelectedPlatform, language }) => {
           </Button>
 
           <p className="text-xs text-muted-foreground text-center mt-4">{t.note}</p>
-          {isProcessing && (
-            <div className="mt-3">
-              <div className="h-2 w-full rounded-full bg-secondary/70 overflow-hidden">
-                <div
-                  className="h-full platform-gradient transition-all duration-300"
-                  style={{ width: `${Math.max(6, progressValue)}%` }}
-                />
-              </div>
-              <p className="text-[11px] text-center text-muted-foreground mt-1">{progressValue}%</p>
-            </div>
-          )}
         </Card>
       </div>
     </section>

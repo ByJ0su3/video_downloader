@@ -44,7 +44,7 @@ function qualityToHeight(videoQuality) {
 
 function safeFilename(name, fallback) {
   if (!name || typeof name !== "string") return fallback;
-  return name.replace(/[^\w.\-()]/g, "_");
+  return name;
 }
 
 async function createCookiesFileIfProvided(tmpDir) {
@@ -176,12 +176,11 @@ async function downloadMedia(payload, onProgress) {
   const ytdlpCandidates = resolveYtDlpCommandCandidates();
   const ffmpegLocation = resolveFfmpegLocation();
   const tmpDir = await fsp.mkdtemp(path.join(os.tmpdir(), "video-downloader-"));
-  const outputTemplate = path.join(tmpDir, "%(title).80s-%(id)s.%(ext)s");
+  const outputTemplate = path.join(tmpDir, "%(title).200B.%(ext)s");
   const cookiesPath = await createCookiesFileIfProvided(tmpDir);
 
   const args = [
     "--no-playlist",
-    "--restrict-filenames",
     "--ffmpeg-location",
     ffmpegLocation,
     "-o",
@@ -195,6 +194,7 @@ async function downloadMedia(payload, onProgress) {
     args.push("-f", "bestaudio/best", "-x", "--audio-format", "mp3");
     const targetBitrate = /^\d+$/.test(String(audioQuality)) && audioQuality !== "max" ? String(audioQuality) : "320";
     args.push("--postprocessor-args", `ffmpeg:-b:a ${targetBitrate}k`);
+    args.push("--audio-quality", "0");
   } else {
     const height = qualityToHeight(videoQuality);
     const fps = /^\d+$/.test(String(videoFps)) ? Number(videoFps) : null;
@@ -204,9 +204,9 @@ async function downloadMedia(payload, onProgress) {
     const selectorFilter = filters.map((v) => `[${v}]`).join("");
     const formatSelector =
       selectorFilter.length > 0
-        ? `bestvideo${selectorFilter}+bestaudio/best${selectorFilter}[vcodec!=none]`
-        : "bestvideo+bestaudio/best[vcodec!=none]";
-    args.push("-f", formatSelector, "--merge-output-format", "mp4");
+        ? `bestvideo${selectorFilter}+bestaudio/best${selectorFilter}[vcodec!=none]/best${selectorFilter}[vcodec!=none]`
+        : "bestvideo+bestaudio/best[vcodec!=none]/best[vcodec!=none]";
+    args.push("-f", formatSelector, "--merge-output-format", "mp4", "--remux-video", "mp4", "--recode-video", "mp4");
   }
 
   args.push(url.trim());
@@ -230,6 +230,12 @@ async function downloadMedia(payload, onProgress) {
     const mediaFile = await findNewestFile(tmpDir);
     if (!mediaFile) {
       const err = new Error("No se genero ningun archivo");
+      err.status = 400;
+      throw err;
+    }
+    const expectedExt = format === "mp3" ? ".mp3" : ".mp4";
+    if (path.extname(mediaFile).toLowerCase() !== expectedExt) {
+      const err = new Error(`No se pudo generar ${expectedExt} para esta fuente`);
       err.status = 400;
       throw err;
     }
