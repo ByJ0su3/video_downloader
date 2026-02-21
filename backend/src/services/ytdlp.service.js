@@ -388,6 +388,7 @@ async function runDownloadWithFallbacks(job) {
       const noExtractorArgs = stripExtractorArgs(baseArgs);
       attempts.push([...noExtractorArgs, "-f", "best", "--remux-video", "mp4", url]);
       attempts.push([...noExtractorArgs, "-f", "bv*+ba/best", "--merge-output-format", "mp4", url]);
+      attempts.push([...noExtractorArgs, "--merge-output-format", "mp4", url]);
     }
   } else {
     attempts.push([...baseArgs, "-x", "--audio-format", "mp3", "--audio-quality", "0", url]);
