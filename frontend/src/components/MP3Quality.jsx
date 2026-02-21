@@ -82,7 +82,7 @@ const MP3Quality = ({ language }) => {
                 <Gauge className="w-6 h-6 text-purple-400" />
               </div>
               <div className="text-2xl font-bold font-['Space_Grotesk'] mb-1">{level.kbps} kbps</div>
-              <div className="text-sm font-semibold text-[hsl(var(--platform-primary))] mb-2">{level.quality}</div>
+              <div className="text-sm font-semibold text-foreground mb-2">{level.quality}</div>
               <p className="text-xs text-muted-foreground mb-2">{level.description}</p>
               <div className="text-xs text-muted-foreground/70">{level.size}</div>
             </Card>
