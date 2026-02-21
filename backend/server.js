@@ -15,23 +15,26 @@ const IS_WIN = process.platform === "win32";
 function splitOrigins(value) {
   if (!value || !value.trim()) return ["*"];
   return value
-    .split(",")
+    .split(/[,\s]+/)
     .map((v) => v.trim())
     .filter(Boolean);
 }
 
 const allowedOrigins = splitOrigins(process.env.CORS_ORIGINS);
-app.use(
-  cors({
-    origin(origin, callback) {
-      if (!origin || allowedOrigins.includes("*") || allowedOrigins.includes(origin)) {
-        callback(null, true);
-        return;
-      }
-      callback(new Error("Origin no permitido por CORS"));
-    },
-  }),
-);
+const corsOptions = {
+  origin(origin, callback) {
+    if (!origin || allowedOrigins.includes("*") || allowedOrigins.includes(origin)) {
+      callback(null, true);
+      return;
+    }
+    callback(null, false);
+  },
+  methods: ["GET", "POST", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+};
+
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
 
 app.use(express.json({ limit: "1mb" }));
 
