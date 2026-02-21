@@ -42,6 +42,10 @@ function qualityToHeight(videoQuality) {
   return match ? Number(match[1]) : null;
 }
 
+function isFormatUnavailableError(message) {
+  return /requested format is not available/i.test(String(message || ""));
+}
+
 function safeFilename(name, fallback) {
   if (!name || typeof name !== "string") return fallback;
   return name;
@@ -204,30 +208,82 @@ async function downloadMedia(payload, onProgress) {
     args.push("--audio-quality", "0");
   } else {
     const height = qualityToHeight(videoQuality);
-    const filters = [];
-    if (height) filters.push(`height<=${height}`);
-    // Do not cap FPS in "video" mode; keep highest source FPS for selected quality.
-    // This avoids accidental down-fps when user picks a lower number by mistake.
-    const selectorFilter = filters.map((v) => `[${v}]`).join("");
-    const formatSelector =
-      selectorFilter.length > 0
-        ? `bestvideo${selectorFilter}+bestaudio/best${selectorFilter}[vcodec!=none]/best${selectorFilter}[vcodec!=none]`
-        : "bestvideo+bestaudio/best[vcodec!=none]/best[vcodec!=none]";
-    args.push(
-      "-f",
-      formatSelector,
-      "-S",
-      "res,fps,hdr:12,vcodec:avc",
-      "--merge-output-format",
-      "mp4",
-      "--remux-video",
-      "mp4",
-      "--recode-video",
-      "mp4",
-    );
-  }
+    // Try strict selector first, then broader fallbacks if unavailable.
+    const selectors = [];
+    if (height) {
+      selectors.push(
+        `bestvideo[height<=${height}]+bestaudio/best[height<=${height}][vcodec!=none]`,
+      );
+    }
+    selectors.push("bestvideo+bestaudio/best[vcodec!=none]");
+    selectors.push("bv*+ba/b");
 
-  args.push(url.trim());
+    let lastVideoError = null;
+    for (const formatSelector of selectors) {
+      const videoArgs = [
+        ...args,
+        "-f",
+        formatSelector,
+        "-S",
+        "res,fps,hdr:12,vcodec:avc",
+        "--merge-output-format",
+        "mp4",
+        "--remux-video",
+        "mp4",
+        "--recode-video",
+        "mp4",
+        url.trim(),
+      ];
+      try {
+        if (onProgress) {
+          onProgress({
+            status: "running",
+            stage: "preparing",
+            progress: 5,
+          });
+        }
+        await runWithCandidates(ytdlpCandidates, videoArgs, 10 * 60 * 1000, onProgress);
+        lastVideoError = null;
+        break;
+      } catch (error) {
+        lastVideoError = error;
+        if (!isFormatUnavailableError(error && error.message)) {
+          throw error;
+        }
+      }
+    }
+
+    if (lastVideoError) {
+      throw lastVideoError;
+    }
+
+    if (onProgress) {
+      onProgress({
+        status: "running",
+        stage: "finalizing",
+        progress: 99,
+      });
+    }
+
+    const mediaFile = await findNewestFile(tmpDir);
+    if (!mediaFile) {
+      const err = new Error("No se genero ningun archivo");
+      err.status = 400;
+      throw err;
+    }
+    const expectedExt = ".mp4";
+    if (path.extname(mediaFile).toLowerCase() !== expectedExt) {
+      const err = new Error(`No se pudo generar ${expectedExt} para esta fuente`);
+      err.status = 400;
+      throw err;
+    }
+
+    return {
+      tmpDir,
+      filePath: mediaFile,
+      fileName: safeFilename(path.basename(mediaFile), "video.mp4"),
+    };
+  }
 
   try {
     if (onProgress) {
@@ -237,7 +293,7 @@ async function downloadMedia(payload, onProgress) {
         progress: 5,
       });
     }
-    await runWithCandidates(ytdlpCandidates, args, 10 * 60 * 1000, onProgress);
+    await runWithCandidates(ytdlpCandidates, [...args, url.trim()], 10 * 60 * 1000, onProgress);
     if (onProgress) {
       onProgress({
         status: "running",
