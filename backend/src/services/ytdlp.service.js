@@ -209,6 +209,7 @@ async function downloadMedia(payload, onProgress) {
   const {
     url,
     format = "video",
+    platform: requestedPlatform = "auto",
     audio_quality: audioQuality = "max",
     video_quality: videoQuality = "best",
   } = payload || {};
@@ -219,19 +220,26 @@ async function downloadMedia(payload, onProgress) {
     throw err;
   }
 
-  if (!["video", "mp3"].includes(format)) {
+  if (!["video", "mp3", "image"].includes(format)) {
     const err = new Error("Formato invalido");
+    err.status = 400;
+    throw err;
+  }
+  const detectedPlatform = detectPlatform(url);
+  const effectivePlatform = requestedPlatform && requestedPlatform !== "auto" ? requestedPlatform : detectedPlatform;
+
+  if (format === "image" && effectivePlatform !== "instagram") {
+    const err = new Error("El formato imagen solo esta disponible para Instagram");
     err.status = 400;
     throw err;
   }
 
   const ytdlpCandidates = resolveYtDlpCommandCandidates();
   const ffmpegLocation = resolveFfmpegLocation();
-  const platform = detectPlatform(url);
   const tmpDir = await fsp.mkdtemp(path.join(os.tmpdir(), "video-downloader-"));
   const outputTemplate = path.join(tmpDir, "%(title).180B.%(ext)s");
   const cookiesPath = await createCookiesFileIfProvided(tmpDir);
-  const platformArgs = getPlatformArgs(platform);
+  const platformArgs = getPlatformArgs(detectedPlatform);
 
   const args = [
     "--no-playlist",
@@ -260,7 +268,7 @@ async function downloadMedia(payload, onProgress) {
     const targetBitrate = /^\d+$/.test(String(audioQuality)) && audioQuality !== "max" ? String(audioQuality) : "320";
     args.push("--postprocessor-args", `ffmpeg:-b:a ${targetBitrate}k`);
     args.push("--audio-quality", "0");
-  } else {
+  } else if (format === "video") {
     const height = qualityToHeight(videoQuality);
     // Try strict selector first, then broader fallbacks if unavailable.
     const selectors = [];
@@ -338,6 +346,47 @@ async function downloadMedia(payload, onProgress) {
       filePath: mediaFile,
       fileName: `${finalTitle}.mp4`,
     };
+  } else {
+    // Image mode: preserve source quality/dimensions with no transcoding.
+    try {
+      if (onProgress) {
+        onProgress({
+          status: "running",
+          stage: "preparing",
+          progress: 5,
+        });
+      }
+      await runWithCandidates(ytdlpCandidates, [...args, url.trim()], 10 * 60 * 1000, onProgress);
+      if (onProgress) {
+        onProgress({
+          status: "running",
+          stage: "finalizing",
+          progress: 99,
+        });
+      }
+      const mediaFile = await findNewestFile(tmpDir);
+      if (!mediaFile) {
+        const err = new Error("No se genero ninguna imagen");
+        err.status = 400;
+        throw err;
+      }
+      const imageExts = new Set([".jpg", ".jpeg", ".png", ".webp", ".bmp", ".gif", ".heic"]);
+      const actualExt = path.extname(mediaFile).toLowerCase();
+      if (!imageExts.has(actualExt)) {
+        const err = new Error("La URL no corresponde a una imagen descargable");
+        err.status = 400;
+        throw err;
+      }
+      const finalTitle = safeFilename(fetchedTitle || path.parse(mediaFile).name, "imagen");
+      return {
+        tmpDir,
+        filePath: mediaFile,
+        fileName: `${finalTitle}${actualExt}`,
+      };
+    } catch (error) {
+      await fsp.rm(tmpDir, { recursive: true, force: true });
+      throw error;
+    }
   }
 
   try {
