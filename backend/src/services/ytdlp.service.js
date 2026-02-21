@@ -235,7 +235,21 @@ function buildCookiesArgs(job) {
   throw createHttpError('cookiesMode invalido. Usa "none", "upload" o "browser"', 400);
 }
 
-async function readProducedFile(tempDir) {
+function scoreOutputFile(filePath, type) {
+  const ext = path.extname(filePath).toLowerCase();
+  if (type === "audio") {
+    if (ext === ".mp3") return 100;
+    if (ext === ".m4a" || ext === ".aac" || ext === ".opus" || ext === ".webm") return 60;
+    return 10;
+  }
+
+  if (ext === ".mp4") return 100;
+  if (ext === ".mkv" || ext === ".webm" || ext === ".mov") return 70;
+  if (ext === ".m4a" || ext === ".mp3" || ext === ".aac" || ext === ".opus") return 5;
+  return 20;
+}
+
+async function readProducedFile(tempDir, type) {
   const entries = await fsp.readdir(tempDir, { withFileTypes: true });
   const files = [];
   for (const entry of entries) {
@@ -247,8 +261,17 @@ async function readProducedFile(tempDir) {
   if (!files.length) return null;
   const stats = await Promise.all(files.map((file) => fsp.stat(file)));
   let idx = 0;
+  let bestScore = scoreOutputFile(files[0], type);
   for (let i = 1; i < files.length; i += 1) {
-    if (stats[i].mtimeMs > stats[idx].mtimeMs) idx = i;
+    const score = scoreOutputFile(files[i], type);
+    if (score > bestScore) {
+      idx = i;
+      bestScore = score;
+      continue;
+    }
+    if (score === bestScore && stats[i].mtimeMs > stats[idx].mtimeMs) {
+      idx = i;
+    }
   }
   return files[idx];
 }
@@ -393,7 +416,7 @@ async function runJob(job) {
     await validateCookiesFileIfNeeded(job);
     await runDownloadWithFallbacks(job);
 
-    const producedFile = await readProducedFile(job.tempDir);
+    const producedFile = await readProducedFile(job.tempDir, job.payload.type);
     if (!producedFile) {
       throw createHttpError("yt-dlp finalizo sin generar archivo.", 400);
     }
