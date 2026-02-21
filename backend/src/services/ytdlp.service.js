@@ -82,14 +82,52 @@ function getPlatformArgs(platform) {
   return args;
 }
 
-async function createCookiesFileIfProvided(tmpDir) {
-  const cookiesB64 = process.env.YTDLP_COOKIES_B64;
-  if (!cookiesB64) return null;
+function platformToLabel(platform) {
+  const labels = {
+    youtube: "YouTube",
+    instagram: "Instagram",
+    twitter: "Twitter/X",
+    twitch: "Twitch",
+    tiktok: "TikTok",
+  };
+  return labels[platform] || "La plataforma";
+}
 
-  const cookiesPath = path.join(tmpDir, "cookies.txt");
-  const cookiesText = Buffer.from(cookiesB64, "base64").toString("utf8");
-  await fsp.writeFile(cookiesPath, cookiesText, "utf8");
-  return cookiesPath;
+function getCookiesFileCandidates(platform) {
+  const namesByPlatform = {
+    youtube: ["youtube", "www.youtube.com", "yt"],
+    instagram: ["instagram", "www.instagram.com", "ig"],
+    twitter: ["twitter", "x", "www.twitter.com", "x.com"],
+    twitch: ["twitch", "www.twitch.tv"],
+    tiktok: ["tiktok", "www.tiktok.com"],
+  };
+
+  const keys = namesByPlatform[platform] || [platform, "cookies"];
+  const candidates = [];
+  for (const key of keys) {
+    candidates.push(path.join(BACKEND_DIR, `${key}_cookies.txt`));
+    candidates.push(path.join(BACKEND_DIR, `${key}_cookies`));
+    candidates.push(path.join(BACKEND_DIR, "cookies", `${key}.txt`));
+  }
+  candidates.push(path.join(BACKEND_DIR, "cookies.txt"));
+  return candidates;
+}
+
+async function createCookiesFileIfProvided(tmpDir, platform) {
+  const platformEnvKey = platform ? `YTDLP_COOKIES_${String(platform).toUpperCase()}_B64` : null;
+  const cookiesB64 = (platformEnvKey && process.env[platformEnvKey]) || process.env.YTDLP_COOKIES_B64;
+  if (cookiesB64) {
+    const cookiesPath = path.join(tmpDir, "cookies.txt");
+    const cookiesText = Buffer.from(cookiesB64, "base64").toString("utf8");
+    await fsp.writeFile(cookiesPath, cookiesText, "utf8");
+    return cookiesPath;
+  }
+
+  const fileCandidates = getCookiesFileCandidates(platform);
+  for (const candidate of fileCandidates) {
+    if (fs.existsSync(candidate)) return candidate;
+  }
+  return null;
 }
 
 function parsePrintedTitle(stdout) {
@@ -268,7 +306,7 @@ async function downloadMedia(payload, onProgress) {
   const ffmpegLocation = resolveFfmpegLocation();
   const tmpDir = await fsp.mkdtemp(path.join(os.tmpdir(), "video-downloader-"));
   const outputTemplate = path.join(tmpDir, "%(title).180B.%(ext)s");
-  const cookiesPath = await createCookiesFileIfProvided(tmpDir);
+  const cookiesPath = await createCookiesFileIfProvided(tmpDir, effectivePlatform);
   const platformArgs = getPlatformArgs(detectedPlatform);
 
   const args = [
@@ -507,6 +545,16 @@ async function downloadMedia(payload, onProgress) {
     if (/sign in to confirm you.?re not a bot/i.test(message)) {
       const err = new Error("YouTube requiere cookies de sesion para este video");
       err.status = 403;
+      throw err;
+    }
+    if (/requested content is not available|rate-limit reached|login required|use --cookies/i.test(message)) {
+      const err = new Error(`${platformToLabel(effectivePlatform)} requiere cookies de sesion para este contenido`);
+      err.status = 403;
+      throw err;
+    }
+    if (/no video could be found in this tweet/i.test(message)) {
+      const err = new Error("Ese tweet no contiene video descargable");
+      err.status = 400;
       throw err;
     }
     if (/ffprobe and ffmpeg not found/i.test(message)) {

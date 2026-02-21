@@ -1,3 +1,7 @@
 .env
 tmp_downloads/
 *.log
+cookies/
+cookies.txt
+*_cookies
+*_cookies.txt
