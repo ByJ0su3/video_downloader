@@ -204,8 +204,8 @@ async function downloadMedia(payload, onProgress) {
     const selectorFilter = filters.map((v) => `[${v}]`).join("");
     const formatSelector =
       selectorFilter.length > 0
-        ? `bestvideo${selectorFilter}+bestaudio/best${selectorFilter}`
-        : "bv*+ba/b";
+        ? `bestvideo${selectorFilter}+bestaudio/best${selectorFilter}[vcodec!=none]`
+        : "bestvideo+bestaudio/best[vcodec!=none]";
     args.push("-f", formatSelector, "--merge-output-format", "mp4");
   }
 

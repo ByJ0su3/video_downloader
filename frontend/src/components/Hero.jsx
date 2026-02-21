@@ -49,6 +49,7 @@ const textByLang = {
     pasteOk: 'Enlace pegado desde portapapeles',
     pasteError: 'No se pudo leer el portapapeles',
     ready: 'Listo para descargar',
+    downloadStarted: 'Descarga iniciada',
     downloadError: 'No se pudo completar la descarga',
     videoSummary: (quality, fps) => `Video: ${quality}, ${fps}`,
     audioSummary: (quality) => `Audio: ${quality}`,
@@ -83,6 +84,7 @@ const textByLang = {
     pasteOk: 'Link pasted from clipboard',
     pasteError: 'Clipboard access failed',
     ready: 'Ready to download',
+    downloadStarted: 'Download started',
     downloadError: 'Download failed',
     videoSummary: (quality, fps) => `Video: ${quality}, ${fps}`,
     audioSummary: (quality) => `Audio: ${quality}`,
@@ -91,18 +93,6 @@ const textByLang = {
 
 const videoQualities = ['2160p (4K)', '1440p (2K)', '1080p', '720p', '480p', 'best'];
 const videoFpsOptions = ['source', '120', '60', '30'];
-
-const getFilenameFromDisposition = (contentDisposition, fallbackName) => {
-  if (!contentDisposition) return fallbackName;
-
-  const utf8Match = contentDisposition.match(/filename\*=UTF-8''([^;]+)/i);
-  if (utf8Match?.[1]) return decodeURIComponent(utf8Match[1]);
-
-  const simpleMatch = contentDisposition.match(/filename="?([^"]+)"?/i);
-  if (simpleMatch?.[1]) return simpleMatch[1];
-
-  return fallbackName;
-};
 
 const Hero = ({ selectedPlatform, setSelectedPlatform, language }) => {
   const [url, setUrl] = useState('');
@@ -239,29 +229,14 @@ const Hero = ({ selectedPlatform, setSelectedPlatform, language }) => {
         }
       }
 
-      const response = await fetch(`${API_BASE_URL}/download/${jobId}/file`);
-      if (!response.ok) {
-        let detail = t.downloadError;
-        try {
-          const errorData = await response.json();
-          if (errorData?.detail) detail = errorData.detail;
-        } catch {
-          // no-op
-        }
-        throw new Error(detail);
-      }
-
-      const blob = await response.blob();
-      const fallbackName = format === 'mp3' ? 'audio.mp3' : 'video.mp4';
-      const filename = getFilenameFromDisposition(response.headers.get('content-disposition'), fallbackName);
-      const downloadUrl = window.URL.createObjectURL(blob);
+      const downloadUrl = `${API_BASE_URL}/download/${jobId}/file`;
       const link = document.createElement('a');
       link.href = downloadUrl;
-      link.download = filename;
+      link.setAttribute('download', '');
+      link.rel = 'noopener';
       document.body.appendChild(link);
       link.click();
       link.remove();
-      window.URL.revokeObjectURL(downloadUrl);
 
       const summary =
         format === 'mp3'
@@ -271,7 +246,7 @@ const Hero = ({ selectedPlatform, setSelectedPlatform, language }) => {
               videoFps === 'source' ? t.sourceFps : `${videoFps} FPS`,
             );
 
-      toast.success(t.ready, { description: summary });
+      toast.success(t.downloadStarted, { description: summary });
     } catch (error) {
       toast.error(error?.message || t.downloadError);
     } finally {
