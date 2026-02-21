@@ -158,7 +158,6 @@ async function downloadMedia(payload, onProgress) {
     format = "video",
     audio_quality: audioQuality = "max",
     video_quality: videoQuality = "best",
-    video_fps: videoFps = "source",
   } = payload || {};
 
   if (!isHttpUrl(url)) {
@@ -181,6 +180,14 @@ async function downloadMedia(payload, onProgress) {
 
   const args = [
     "--no-playlist",
+    "--retries",
+    "10",
+    "--fragment-retries",
+    "10",
+    "--extractor-retries",
+    "5",
+    "--retry-sleep",
+    "http:2",
     "--ffmpeg-location",
     ffmpegLocation,
     "-o",
@@ -197,16 +204,27 @@ async function downloadMedia(payload, onProgress) {
     args.push("--audio-quality", "0");
   } else {
     const height = qualityToHeight(videoQuality);
-    const fps = /^\d+$/.test(String(videoFps)) ? Number(videoFps) : null;
     const filters = [];
     if (height) filters.push(`height<=${height}`);
-    if (fps) filters.push(`fps<=${fps}`);
+    // Do not cap FPS in "video" mode; keep highest source FPS for selected quality.
+    // This avoids accidental down-fps when user picks a lower number by mistake.
     const selectorFilter = filters.map((v) => `[${v}]`).join("");
     const formatSelector =
       selectorFilter.length > 0
         ? `bestvideo${selectorFilter}+bestaudio/best${selectorFilter}[vcodec!=none]/best${selectorFilter}[vcodec!=none]`
         : "bestvideo+bestaudio/best[vcodec!=none]/best[vcodec!=none]";
-    args.push("-f", formatSelector, "--merge-output-format", "mp4", "--remux-video", "mp4", "--recode-video", "mp4");
+    args.push(
+      "-f",
+      formatSelector,
+      "-S",
+      "res,fps,hdr:12,vcodec:avc",
+      "--merge-output-format",
+      "mp4",
+      "--remux-video",
+      "mp4",
+      "--recode-video",
+      "mp4",
+    );
   }
 
   args.push(url.trim());
@@ -252,8 +270,32 @@ async function downloadMedia(payload, onProgress) {
       err.status = 400;
       throw err;
     }
-    if (error && /sign in to confirm you.?re not a bot/i.test(String(error.message || ""))) {
+    const message = String((error && error.message) || "");
+    if (/http error 403: forbidden/i.test(message) && /youtube|youtu\.be/i.test(url)) {
+      // Retry once with a different YouTube client strategy before failing.
+      const retryArgs = [...args];
+      retryArgs.splice(1, 0, "--extractor-args", "youtube:player_client=web,web_creator,tv_embedded");
+      try {
+        await runWithCandidates(ytdlpCandidates, retryArgs, 10 * 60 * 1000, onProgress);
+        const retriedFile = await findNewestFile(tmpDir);
+        if (retriedFile) {
+          return {
+            tmpDir,
+            filePath: retriedFile,
+            fileName: safeFilename(path.basename(retriedFile), format === "mp3" ? "audio.mp3" : "video.mp4"),
+          };
+        }
+      } catch (_retryErr) {
+        // fall through to the normal error handling below
+      }
+    }
+    if (/sign in to confirm you.?re not a bot/i.test(message)) {
       const err = new Error("YouTube requiere cookies de sesion para este video");
+      err.status = 403;
+      throw err;
+    }
+    if (/http error 403: forbidden/i.test(message)) {
+      const err = new Error("La plataforma bloqueo el acceso directo a este video (HTTP 403)");
       err.status = 403;
       throw err;
     }
