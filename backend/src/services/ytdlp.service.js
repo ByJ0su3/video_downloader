@@ -57,7 +57,7 @@ async function createCookiesFileIfProvided(tmpDir) {
   return cookiesPath;
 }
 
-function runCommand(cmd, args, timeoutMs) {
+function runCommand(cmd, args, timeoutMs, onProgress) {
   return new Promise((resolve, reject) => {
     const child = spawn(cmd, args, {
       cwd: BACKEND_DIR,
@@ -74,8 +74,24 @@ function runCommand(cmd, args, timeoutMs) {
     child.stdout.on("data", (chunk) => {
       stdout += chunk.toString("utf8");
     });
+    let stderrBuffer = "";
     child.stderr.on("data", (chunk) => {
-      stderr += chunk.toString("utf8");
+      const text = chunk.toString("utf8");
+      stderr += text;
+      stderrBuffer += text;
+      const lines = stderrBuffer.split(/\r?\n/);
+      stderrBuffer = lines.pop() || "";
+      for (const line of lines) {
+        const match = line.match(/\[download\]\s+(\d+(?:\.\d+)?)%/i);
+        if (match && onProgress) {
+          const percent = Math.min(99, Math.max(1, Math.round(Number(match[1]))));
+          onProgress({
+            status: "running",
+            stage: "downloading",
+            progress: percent,
+          });
+        }
+      }
     });
 
     child.on("error", (error) => {
@@ -95,13 +111,13 @@ function runCommand(cmd, args, timeoutMs) {
   });
 }
 
-async function runWithCandidates(candidates, args, timeoutMs) {
+async function runWithCandidates(candidates, args, timeoutMs, onProgress) {
   let lastError = null;
 
   for (const candidate of candidates) {
     const fullArgs = [...candidate.argsPrefix, ...args];
     try {
-      return await runCommand(candidate.cmd, fullArgs, timeoutMs);
+      return await runCommand(candidate.cmd, fullArgs, timeoutMs, onProgress);
     } catch (error) {
       lastError = error;
       if (error && error.code === "ENOENT") continue;
@@ -136,7 +152,7 @@ async function findNewestFile(dirPath) {
   return newest;
 }
 
-async function downloadMedia(payload) {
+async function downloadMedia(payload, onProgress) {
   const {
     url,
     format = "video",
@@ -166,8 +182,6 @@ async function downloadMedia(payload) {
   const args = [
     "--no-playlist",
     "--restrict-filenames",
-    "--extractor-args",
-    "youtube:player_client=android,web",
     "--ffmpeg-location",
     ffmpegLocation,
     "-o",
@@ -179,9 +193,8 @@ async function downloadMedia(payload) {
 
   if (format === "mp3") {
     args.push("-f", "bestaudio/best", "-x", "--audio-format", "mp3");
-    if (/^\d+$/.test(String(audioQuality)) && audioQuality !== "max") {
-      args.push("--postprocessor-args", `ffmpeg:-b:a ${audioQuality}k`);
-    }
+    const targetBitrate = /^\d+$/.test(String(audioQuality)) && audioQuality !== "max" ? String(audioQuality) : "320";
+    args.push("--postprocessor-args", `ffmpeg:-b:a ${targetBitrate}k`);
   } else {
     const height = qualityToHeight(videoQuality);
     const fps = /^\d+$/.test(String(videoFps)) ? Number(videoFps) : null;
@@ -189,14 +202,31 @@ async function downloadMedia(payload) {
     if (height) filters.push(`height<=${height}`);
     if (fps) filters.push(`fps<=${fps}`);
     const selectorFilter = filters.map((v) => `[${v}]`).join("");
-    const formatSelector = `bestvideo${selectorFilter}+bestaudio/best${selectorFilter}`;
+    const formatSelector =
+      selectorFilter.length > 0
+        ? `bestvideo${selectorFilter}+bestaudio/best${selectorFilter}`
+        : "bv*+ba/b";
     args.push("-f", formatSelector, "--merge-output-format", "mp4");
   }
 
   args.push(url.trim());
 
   try {
-    await runWithCandidates(ytdlpCandidates, args, 10 * 60 * 1000);
+    if (onProgress) {
+      onProgress({
+        status: "running",
+        stage: "preparing",
+        progress: 5,
+      });
+    }
+    await runWithCandidates(ytdlpCandidates, args, 10 * 60 * 1000, onProgress);
+    if (onProgress) {
+      onProgress({
+        status: "running",
+        stage: "finalizing",
+        progress: 99,
+      });
+    }
     const mediaFile = await findNewestFile(tmpDir);
     if (!mediaFile) {
       const err = new Error("No se genero ningun archivo");

@@ -37,6 +37,10 @@ const textByLang = {
     best: 'Mejor disponible',
     sourceFps: 'FPS original',
     processing: 'Procesando...',
+    processingQueued: 'En cola...',
+    processingPreparing: 'Preparando descarga...',
+    processingDownloading: 'Descargando en servidor...',
+    processingFinalizing: 'Finalizando archivo...',
     download: 'Descargar',
     note: 'Respetamos los límites de cada fuente. La calidad depende del audio/video original.',
     urlRequired: 'Por favor, ingresa un enlace',
@@ -67,6 +71,10 @@ const textByLang = {
     best: 'Best available',
     sourceFps: 'Source FPS',
     processing: 'Processing...',
+    processingQueued: 'Queued...',
+    processingPreparing: 'Preparing download...',
+    processingDownloading: 'Downloading on server...',
+    processingFinalizing: 'Finalizing file...',
     download: 'Download',
     note: 'Quality depends on the original source audio/video.',
     urlRequired: 'Please enter a link',
@@ -103,6 +111,8 @@ const Hero = ({ selectedPlatform, setSelectedPlatform, language }) => {
   const [videoQuality, setVideoQuality] = useState('best');
   const [videoFps, setVideoFps] = useState('source');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [progressValue, setProgressValue] = useState(0);
+  const [processingLabel, setProcessingLabel] = useState('');
 
   const t = textByLang[language];
 
@@ -162,9 +172,11 @@ const Hero = ({ selectedPlatform, setSelectedPlatform, language }) => {
     }
 
     setIsProcessing(true);
+    setProgressValue(0);
+    setProcessingLabel(t.processingQueued);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/download`, {
+      const createJobResponse = await fetch(`${API_BASE_URL}/download`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -179,6 +191,55 @@ const Hero = ({ selectedPlatform, setSelectedPlatform, language }) => {
         }),
       });
 
+      if (!createJobResponse.ok) {
+        let detail = t.downloadError;
+        try {
+          const errorData = await createJobResponse.json();
+          if (errorData?.detail) detail = errorData.detail;
+        } catch {
+          // no-op
+        }
+        throw new Error(detail);
+      }
+
+      const createdJob = await createJobResponse.json();
+      const jobId = createdJob?.job_id;
+      if (!jobId) {
+        throw new Error(t.downloadError);
+      }
+
+      const stageLabelById = {
+        queued: t.processingQueued,
+        starting: t.processingPreparing,
+        preparing: t.processingPreparing,
+        downloading: t.processingDownloading,
+        finalizing: t.processingFinalizing,
+        ready: t.ready,
+      };
+
+      let jobDone = false;
+      while (!jobDone) {
+        // eslint-disable-next-line no-await-in-loop
+        await new Promise((resolve) => setTimeout(resolve, 900));
+        // eslint-disable-next-line no-await-in-loop
+        const statusResponse = await fetch(`${API_BASE_URL}/download/${jobId}/status`);
+        if (!statusResponse.ok) {
+          throw new Error(t.downloadError);
+        }
+        // eslint-disable-next-line no-await-in-loop
+        const statusData = await statusResponse.json();
+        setProgressValue(Math.max(0, Math.min(100, statusData.progress || 0)));
+        setProcessingLabel(stageLabelById[statusData.stage] || t.processing);
+
+        if (statusData.status === 'error') {
+          throw new Error(statusData.error || t.downloadError);
+        }
+        if (statusData.status === 'done') {
+          jobDone = true;
+        }
+      }
+
+      const response = await fetch(`${API_BASE_URL}/download/${jobId}/file`);
       if (!response.ok) {
         let detail = t.downloadError;
         try {
@@ -215,6 +276,8 @@ const Hero = ({ selectedPlatform, setSelectedPlatform, language }) => {
       toast.error(error?.message || t.downloadError);
     } finally {
       setIsProcessing(false);
+      setProgressValue(0);
+      setProcessingLabel('');
     }
   };
 
@@ -385,7 +448,7 @@ const Hero = ({ selectedPlatform, setSelectedPlatform, language }) => {
             {isProcessing ? (
               <>
                 <div className="w-5 h-5 border-2 border-[hsl(var(--on-platform)/0.35)] border-t-[hsl(var(--on-platform))] rounded-full animate-spin mr-2" />
-                {t.processing}
+                {processingLabel || t.processing}
               </>
             ) : (
               <>
@@ -396,6 +459,17 @@ const Hero = ({ selectedPlatform, setSelectedPlatform, language }) => {
           </Button>
 
           <p className="text-xs text-muted-foreground text-center mt-4">{t.note}</p>
+          {isProcessing && (
+            <div className="mt-3">
+              <div className="h-2 w-full rounded-full bg-secondary/70 overflow-hidden">
+                <div
+                  className="h-full platform-gradient transition-all duration-300"
+                  style={{ width: `${Math.max(6, progressValue)}%` }}
+                />
+              </div>
+              <p className="text-[11px] text-center text-muted-foreground mt-1">{progressValue}%</p>
+            </div>
+          )}
         </Card>
       </div>
     </section>
