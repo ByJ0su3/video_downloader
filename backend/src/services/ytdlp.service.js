@@ -11,6 +11,16 @@ function isHttpUrl(value) {
   return typeof value === "string" && /^https?:\/\//i.test(value.trim());
 }
 
+function detectPlatform(url) {
+  const value = String(url || "").toLowerCase();
+  if (/youtube\.com|youtu\.be/.test(value)) return "youtube";
+  if (/instagram\.com/.test(value)) return "instagram";
+  if (/tiktok\.com/.test(value)) return "tiktok";
+  if (/twitch\.tv/.test(value)) return "twitch";
+  if (/twitter\.com|x\.com/.test(value)) return "twitter";
+  return "generic";
+}
+
 function localBinPath(baseName) {
   const fileName = IS_WIN ? `${baseName}.exe` : baseName;
   return path.join(BIN_DIR, fileName);
@@ -48,7 +58,23 @@ function isFormatUnavailableError(message) {
 
 function safeFilename(name, fallback) {
   if (!name || typeof name !== "string") return fallback;
-  return name;
+  // Preserve readable title while removing invalid chars for client filesystems.
+  return name.replace(/[\\/:*?"<>|]/g, " ").replace(/\s+/g, " ").trim() || fallback;
+}
+
+function getPlatformArgs(platform) {
+  const args = [
+    "--add-header",
+    "User-Agent:Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
+    "--add-header",
+    "Accept-Language:en-US,en;q=0.9",
+  ];
+
+  if (platform === "youtube") {
+    args.push("--extractor-args", "youtube:player_client=web,web_creator,tv_embedded");
+  }
+
+  return args;
 }
 
 async function createCookiesFileIfProvided(tmpDir) {
@@ -59,6 +85,15 @@ async function createCookiesFileIfProvided(tmpDir) {
   const cookiesText = Buffer.from(cookiesB64, "base64").toString("utf8");
   await fsp.writeFile(cookiesPath, cookiesText, "utf8");
   return cookiesPath;
+}
+
+function parsePrintedTitle(stdout) {
+  const lines = String(stdout || "")
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+  if (lines.length === 0) return null;
+  return lines[lines.length - 1];
 }
 
 function runCommand(cmd, args, timeoutMs, onProgress) {
@@ -133,6 +168,20 @@ async function runWithCandidates(candidates, args, timeoutMs, onProgress) {
   throw new Error("No se encontro un ejecutable para yt-dlp");
 }
 
+async function fetchTitle(candidates, baseArgs, url, timeoutMs) {
+  try {
+    const result = await runWithCandidates(
+      candidates,
+      [...baseArgs, "--skip-download", "--print", "%(title)s", url],
+      timeoutMs,
+      null,
+    );
+    return parsePrintedTitle(result.stdout);
+  } catch (_error) {
+    return null;
+  }
+}
+
 async function findNewestFile(dirPath) {
   const entries = await fsp.readdir(dirPath, { withFileTypes: true });
   const files = entries
@@ -178,9 +227,11 @@ async function downloadMedia(payload, onProgress) {
 
   const ytdlpCandidates = resolveYtDlpCommandCandidates();
   const ffmpegLocation = resolveFfmpegLocation();
+  const platform = detectPlatform(url);
   const tmpDir = await fsp.mkdtemp(path.join(os.tmpdir(), "video-downloader-"));
-  const outputTemplate = path.join(tmpDir, "%(title).200B.%(ext)s");
+  const outputTemplate = path.join(tmpDir, "%(title).180B.%(ext)s");
   const cookiesPath = await createCookiesFileIfProvided(tmpDir);
+  const platformArgs = getPlatformArgs(platform);
 
   const args = [
     "--no-playlist",
@@ -192,6 +243,7 @@ async function downloadMedia(payload, onProgress) {
     "5",
     "--retry-sleep",
     "http:2",
+    ...platformArgs,
     "--ffmpeg-location",
     ffmpegLocation,
     "-o",
@@ -200,6 +252,8 @@ async function downloadMedia(payload, onProgress) {
   if (cookiesPath) {
     args.push("--cookies", cookiesPath);
   }
+
+  const fetchedTitle = await fetchTitle(ytdlpCandidates, args, url.trim(), 60 * 1000);
 
   if (format === "mp3") {
     args.push("-f", "bestaudio/best", "-x", "--audio-format", "mp3");
@@ -277,11 +331,12 @@ async function downloadMedia(payload, onProgress) {
       err.status = 400;
       throw err;
     }
+    const finalTitle = safeFilename(fetchedTitle || path.parse(mediaFile).name, "video");
 
     return {
       tmpDir,
       filePath: mediaFile,
-      fileName: safeFilename(path.basename(mediaFile), "video.mp4"),
+      fileName: `${finalTitle}.mp4`,
     };
   }
 
@@ -314,10 +369,14 @@ async function downloadMedia(payload, onProgress) {
       throw err;
     }
 
+    const finalTitle = safeFilename(
+      fetchedTitle || path.parse(mediaFile).name,
+      format === "mp3" ? "audio" : "video",
+    );
     return {
       tmpDir,
       filePath: mediaFile,
-      fileName: safeFilename(path.basename(mediaFile), format === "mp3" ? "audio.mp3" : "video.mp4"),
+      fileName: `${finalTitle}${expectedExt}`,
     };
   } catch (error) {
     await fsp.rm(tmpDir, { recursive: true, force: true });
@@ -332,13 +391,18 @@ async function downloadMedia(payload, onProgress) {
       const retryArgs = [...args];
       retryArgs.splice(1, 0, "--extractor-args", "youtube:player_client=web,web_creator,tv_embedded");
       try {
-        await runWithCandidates(ytdlpCandidates, retryArgs, 10 * 60 * 1000, onProgress);
+        await runWithCandidates(ytdlpCandidates, [...retryArgs, url.trim()], 10 * 60 * 1000, onProgress);
         const retriedFile = await findNewestFile(tmpDir);
         if (retriedFile) {
+          const retriedExt = format === "mp3" ? ".mp3" : ".mp4";
+          const finalTitle = safeFilename(
+            fetchedTitle || path.parse(retriedFile).name,
+            format === "mp3" ? "audio" : "video",
+          );
           return {
             tmpDir,
             filePath: retriedFile,
-            fileName: safeFilename(path.basename(retriedFile), format === "mp3" ? "audio.mp3" : "video.mp4"),
+            fileName: `${finalTitle}${retriedExt}`,
           };
         }
       } catch (_retryErr) {
