@@ -1,8 +1,8 @@
 [phases.setup]
-aptPkgs = ["ffmpeg", "yt-dlp"]
+aptPkgs = ["ffmpeg", "python3", "python3-pip", "yt-dlp"]
 
 [phases.install]
-cmds = ["cd backend && npm install"]
+cmds = ["cd backend && npm install", "pip3 install --no-cache-dir yt-dlp"]
 
 [start]
 cmd = "cd backend && npm start"
