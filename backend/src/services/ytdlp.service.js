@@ -47,6 +47,16 @@ function safeFilename(name, fallback) {
   return name.replace(/[^\w.\-()]/g, "_");
 }
 
+async function createCookiesFileIfProvided(tmpDir) {
+  const cookiesB64 = process.env.YTDLP_COOKIES_B64;
+  if (!cookiesB64) return null;
+
+  const cookiesPath = path.join(tmpDir, "cookies.txt");
+  const cookiesText = Buffer.from(cookiesB64, "base64").toString("utf8");
+  await fsp.writeFile(cookiesPath, cookiesText, "utf8");
+  return cookiesPath;
+}
+
 function runCommand(cmd, args, timeoutMs) {
   return new Promise((resolve, reject) => {
     const child = spawn(cmd, args, {
@@ -151,15 +161,21 @@ async function downloadMedia(payload) {
   const ffmpegLocation = resolveFfmpegLocation();
   const tmpDir = await fsp.mkdtemp(path.join(os.tmpdir(), "video-downloader-"));
   const outputTemplate = path.join(tmpDir, "%(title).80s-%(id)s.%(ext)s");
+  const cookiesPath = await createCookiesFileIfProvided(tmpDir);
 
   const args = [
     "--no-playlist",
     "--restrict-filenames",
+    "--extractor-args",
+    "youtube:player_client=android,web",
     "--ffmpeg-location",
     ffmpegLocation,
     "-o",
     outputTemplate,
   ];
+  if (cookiesPath) {
+    args.push("--cookies", cookiesPath);
+  }
 
   if (format === "mp3") {
     args.push("-f", "bestaudio/best", "-x", "--audio-format", "mp3");
@@ -198,6 +214,11 @@ async function downloadMedia(payload) {
     if (error && error.code === "ENOENT") {
       const err = new Error("yt-dlp no esta instalado en el servidor");
       err.status = 400;
+      throw err;
+    }
+    if (error && /sign in to confirm you.?re not a bot/i.test(String(error.message || ""))) {
+      const err = new Error("YouTube requiere cookies de sesion para este video");
+      err.status = 403;
       throw err;
     }
     throw error;
