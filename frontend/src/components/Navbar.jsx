@@ -1,16 +1,25 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { Button } from './ui/button';
-import { Menu, X, Download, Sun, Moon } from 'lucide-react';
+import { Menu, X, Download, Sun, Moon, Sparkles } from 'lucide-react';
+import { FaYoutube, FaTwitter, FaInstagram, FaTwitch, FaTiktok } from 'react-icons/fa';
 
-const Navbar = ({ language, setLanguage, theme, setTheme }) => {
+const platformOptions = [
+  { id: 'auto', labelEs: 'Auto', labelEn: 'Auto', icon: Sparkles },
+  { id: 'youtube', labelEs: 'YouTube', labelEn: 'YouTube', icon: FaYoutube },
+  { id: 'twitter', labelEs: 'Twitter/X', labelEn: 'Twitter/X', icon: FaTwitter },
+  { id: 'instagram', labelEs: 'Instagram', labelEn: 'Instagram', icon: FaInstagram },
+  { id: 'twitch', labelEs: 'Twitch', labelEn: 'Twitch', icon: FaTwitch },
+  { id: 'tiktok', labelEs: 'TikTok', labelEn: 'TikTok', icon: FaTiktok },
+];
+
+const Navbar = ({ language, setLanguage, theme, setTheme, selectedPlatform, setSelectedPlatform }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const copy = {
     es: {
-      how: 'Cómo funciona',
+      how: 'Como funciona',
       platforms: 'Plataformas',
       quality: 'Calidad MP3',
-      faq: 'Preguntas',
       lang: 'ES',
       theme: 'Tema',
     },
@@ -18,7 +27,6 @@ const Navbar = ({ language, setLanguage, theme, setTheme }) => {
       how: 'How it works',
       platforms: 'Platforms',
       quality: 'MP3 Quality',
-      faq: 'FAQ',
       lang: 'EN',
       theme: 'Theme',
     },
@@ -45,7 +53,29 @@ const Navbar = ({ language, setLanguage, theme, setTheme }) => {
             <span className="text-xl font-bold font-['Space_Grotesk'] text-foreground">LinkRip</span>
           </div>
 
-          <div className="hidden md:flex items-center space-x-6">
+          <div className="hidden lg:flex items-center gap-2">
+            {platformOptions.map((platform) => {
+              const Icon = platform.icon;
+              return (
+                <Button
+                  key={platform.id}
+                  variant={selectedPlatform === platform.id ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setSelectedPlatform(platform.id)}
+                  className={
+                    selectedPlatform === platform.id
+                      ? 'platform-gradient platform-glow border-0 text-[hsl(var(--on-platform))]'
+                      : 'text-foreground'
+                  }
+                >
+                  <Icon className="w-4 h-4 mr-1" />
+                  {language === 'es' ? platform.labelEs : platform.labelEn}
+                </Button>
+              );
+            })}
+          </div>
+
+          <div className="hidden md:flex items-center space-x-3">
             <button
               onClick={() => scrollToSection('how-it-works')}
               className="text-sm text-muted-foreground hover:text-foreground fast-transition"
@@ -63,12 +93,6 @@ const Navbar = ({ language, setLanguage, theme, setTheme }) => {
               className="text-sm text-muted-foreground hover:text-foreground fast-transition"
             >
               {t.quality}
-            </button>
-            <button
-              onClick={() => scrollToSection('faq')}
-              className="text-sm text-muted-foreground hover:text-foreground fast-transition"
-            >
-              {t.faq}
             </button>
             <Button
               variant="outline"
@@ -101,6 +125,31 @@ const Navbar = ({ language, setLanguage, theme, setTheme }) => {
       {mobileMenuOpen && (
         <div className="md:hidden glass-effect border-t border-border/50">
           <div className="px-4 py-4 space-y-3">
+            <div className="grid grid-cols-2 gap-2">
+              {platformOptions.map((platform) => {
+                const Icon = platform.icon;
+                return (
+                  <Button
+                    key={platform.id}
+                    variant={selectedPlatform === platform.id ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => {
+                      setSelectedPlatform(platform.id);
+                      setMobileMenuOpen(false);
+                    }}
+                    className={
+                      selectedPlatform === platform.id
+                        ? 'platform-gradient platform-glow border-0 text-[hsl(var(--on-platform))]'
+                        : 'text-foreground'
+                    }
+                  >
+                    <Icon className="w-4 h-4 mr-1" />
+                    {language === 'es' ? platform.labelEs : platform.labelEn}
+                  </Button>
+                );
+              })}
+            </div>
+
             <button
               onClick={() => scrollToSection('how-it-works')}
               className="block w-full text-left text-sm text-muted-foreground hover:text-foreground fast-transition py-2"
@@ -119,12 +168,7 @@ const Navbar = ({ language, setLanguage, theme, setTheme }) => {
             >
               {t.quality}
             </button>
-            <button
-              onClick={() => scrollToSection('faq')}
-              className="block w-full text-left text-sm text-muted-foreground hover:text-foreground fast-transition py-2"
-            >
-              {t.faq}
-            </button>
+
             <div className="flex items-center gap-2 pt-2">
               <Button
                 variant="outline"

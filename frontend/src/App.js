@@ -5,8 +5,6 @@ import Hero from './components/Hero';
 import HowItWorks from './components/HowItWorks';
 import Platforms from './components/Platforms';
 import MP3Quality from './components/MP3Quality';
-import Benefits from './components/Benefits';
-import FAQ from './components/FAQ';
 import Footer from './components/Footer';
 
 function App() {
@@ -31,6 +29,8 @@ function App() {
         setLanguage={setLanguage}
         theme={theme}
         setTheme={setTheme}
+        selectedPlatform={selectedPlatform}
+        setSelectedPlatform={setSelectedPlatform}
       />
       <Hero 
         selectedPlatform={selectedPlatform} 
@@ -40,8 +40,6 @@ function App() {
       <HowItWorks language={language} />
       <Platforms setSelectedPlatform={setSelectedPlatform} language={language} />
       <MP3Quality language={language} />
-      <Benefits language={language} />
-      <FAQ language={language} />
       <Footer language={language} />
       <Toaster />
     </div>

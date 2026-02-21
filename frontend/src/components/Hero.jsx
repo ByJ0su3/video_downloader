@@ -1,32 +1,27 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Card } from './ui/card';
 import { Badge } from './ui/badge';
 import { Download, Link2, Sparkles, Music, Video, ClipboardPaste, Image as ImageIcon } from 'lucide-react';
 import { toast } from 'sonner';
-import { FaYoutube, FaTwitter, FaInstagram, FaTwitch, FaTiktok } from 'react-icons/fa';
 
 const API_BASE_URL =
   process.env.REACT_APP_API_URL || 'https://videodownloader-production-8194.up.railway.app/api';
 
-const platforms = [
-  { id: 'youtube', name: 'YouTube', pattern: /youtube\.com|youtu\.be/i, icon: FaYoutube },
-  { id: 'twitter', name: 'Twitter/X', pattern: /twitter\.com|x\.com/i, icon: FaTwitter },
-  { id: 'instagram', name: 'Instagram', pattern: /instagram\.com/i, icon: FaInstagram },
-  { id: 'twitch', name: 'Twitch', pattern: /twitch\.tv/i, icon: FaTwitch },
-  { id: 'tiktok', name: 'TikTok', pattern: /tiktok\.com/i, icon: FaTiktok },
+const platformPatterns = [
+  { id: 'youtube', pattern: /youtube\.com|youtu\.be/i },
+  { id: 'twitter', pattern: /twitter\.com|x\.com/i },
+  { id: 'instagram', pattern: /instagram\.com/i },
+  { id: 'twitch', pattern: /twitch\.tv/i },
+  { id: 'tiktok', pattern: /tiktok\.com/i },
 ];
 
 const textByLang = {
   es: {
-    badge: 'Rápido, seguro y sin límites',
-    title: 'Descarga videos o convierte a',
-    titleAccent: 'MP3 en máxima calidad',
+    badge: 'Rapido, seguro y sin limites',
     subtitle: 'Pega un link de YouTube, Twitter, Instagram, Twitch o TikTok y descarga en segundos.',
-    inputPlaceholder: 'Pega aquí tu enlace de video...',
-    platform: 'Plataforma',
-    auto: 'Auto',
+    inputPlaceholder: 'Pega aqui tu enlace...',
     format: 'Formato',
     video: 'Video',
     image: 'Imagen',
@@ -34,7 +29,7 @@ const textByLang = {
     audioQuality: 'Calidad de audio',
     videoQuality: 'Calidad de video',
     videoFps: 'FPS',
-    max: 'Máximo',
+    max: 'Maximo',
     best: 'Mejor disponible',
     sourceFps: 'FPS original',
     processing: 'Procesando...',
@@ -43,10 +38,8 @@ const textByLang = {
     processingDownloading: 'Descargando en servidor...',
     processingFinalizing: 'Finalizando archivo...',
     download: 'Descargar',
-    note: 'Respetamos los límites de cada fuente. La calidad depende del audio/video original.',
+    note: 'Respetamos los limites de cada fuente. La calidad depende del audio/video original.',
     urlRequired: 'Por favor, ingresa un enlace',
-    platformRequired: 'No pudimos detectar la plataforma. Selecciónala manualmente.',
-    platformDetected: 'Plataforma detectada',
     pasteOk: 'Enlace pegado desde portapapeles',
     pasteError: 'No se pudo leer el portapapeles',
     ready: 'Listo para descargar',
@@ -55,15 +48,19 @@ const textByLang = {
     videoSummary: (quality, fps) => `Video: ${quality}, ${fps}`,
     audioSummary: (quality) => `Audio: ${quality}`,
     imageSummary: 'Imagen original',
+    titles: {
+      auto: { lead: 'Descarga videos o convierte a', accent: 'MP3 en maxima calidad' },
+      youtube: { lead: 'Descarga videos o convierte a MP3 en', accent: 'YouTube' },
+      twitter: { lead: 'Descarga videos en', accent: 'Twitter/X' },
+      instagram: { lead: 'Descarga videos o imagenes en', accent: 'Instagram' },
+      twitch: { lead: 'Descarga videos en', accent: 'Twitch' },
+      tiktok: { lead: 'Descarga videos en', accent: 'TikTok' },
+    },
   },
   en: {
     badge: 'Fast, safe and unlimited',
-    title: 'Download videos or convert to',
-    titleAccent: 'MP3 in highest quality',
     subtitle: 'Paste a YouTube, Twitter, Instagram, Twitch or TikTok link and download in seconds.',
-    inputPlaceholder: 'Paste your video link here...',
-    platform: 'Platform',
-    auto: 'Auto',
+    inputPlaceholder: 'Paste your link here...',
     format: 'Format',
     video: 'Video',
     image: 'Image',
@@ -82,8 +79,6 @@ const textByLang = {
     download: 'Download',
     note: 'Quality depends on the original source audio/video.',
     urlRequired: 'Please enter a link',
-    platformRequired: 'Platform was not detected. Please select it manually.',
-    platformDetected: 'Platform detected',
     pasteOk: 'Link pasted from clipboard',
     pasteError: 'Clipboard access failed',
     ready: 'Ready to download',
@@ -92,6 +87,14 @@ const textByLang = {
     videoSummary: (quality, fps) => `Video: ${quality}, ${fps}`,
     audioSummary: (quality) => `Audio: ${quality}`,
     imageSummary: 'Original image',
+    titles: {
+      auto: { lead: 'Download videos or convert to', accent: 'MP3 in highest quality' },
+      youtube: { lead: 'Download videos or convert to MP3 on', accent: 'YouTube' },
+      twitter: { lead: 'Download videos on', accent: 'Twitter/X' },
+      instagram: { lead: 'Download videos or images on', accent: 'Instagram' },
+      twitch: { lead: 'Download videos on', accent: 'Twitch' },
+      tiktok: { lead: 'Download videos on', accent: 'TikTok' },
+    },
   },
 };
 
@@ -110,14 +113,15 @@ const Hero = ({ selectedPlatform, setSelectedPlatform, language }) => {
   const t = textByLang[language];
 
   const detectPlatform = (urlString) => {
-    for (const platform of platforms) {
-      if (platform.pattern.test(urlString)) {
-        return platform.id;
-      }
-    }
-    return null;
+    const match = platformPatterns.find((platform) => platform.pattern.test(String(urlString || '')));
+    return match ? match.id : null;
   };
+
   const imageFormatEnabled = selectedPlatform === 'instagram' || (selectedPlatform === 'auto' && detectPlatform(url) === 'instagram');
+
+  const heroTitle = useMemo(() => {
+    return t.titles[selectedPlatform] || t.titles.auto;
+  }, [selectedPlatform, t.titles]);
 
   useEffect(() => {
     if (format === 'image' && !imageFormatEnabled) {
@@ -129,31 +133,24 @@ const Hero = ({ selectedPlatform, setSelectedPlatform, language }) => {
     const newUrl = e.target.value;
     setUrl(newUrl);
 
-    if (!newUrl.trim()) {
-      return;
-    }
+    if (!newUrl.trim()) return;
 
-    const detected = detectPlatform(newUrl);
-    if (detected) {
-      setSelectedPlatform(detected);
-      const platformName = platforms.find((p) => p.id === detected)?.name;
-      toast.success(`${t.platformDetected}: ${platformName}`);
+    if (selectedPlatform === 'auto') {
+      const detected = detectPlatform(newUrl);
+      if (detected) setSelectedPlatform(detected);
     }
   };
 
   const handlePaste = async () => {
     try {
       const clipboardText = await navigator.clipboard.readText();
-      if (!clipboardText) {
-        return;
-      }
+      if (!clipboardText) return;
 
       setUrl(clipboardText);
-      const detected = detectPlatform(clipboardText);
-      if (detected) {
-        setSelectedPlatform(detected);
+      if (selectedPlatform === 'auto') {
+        const detected = detectPlatform(clipboardText);
+        if (detected) setSelectedPlatform(detected);
       }
-
       toast.success(t.pasteOk);
     } catch {
       toast.error(t.pasteError);
@@ -163,11 +160,6 @@ const Hero = ({ selectedPlatform, setSelectedPlatform, language }) => {
   const handleDownload = async () => {
     if (!url.trim()) {
       toast.error(t.urlRequired);
-      return;
-    }
-
-    if (selectedPlatform === 'auto') {
-      toast.error(t.platformRequired);
       return;
     }
 
@@ -203,9 +195,7 @@ const Hero = ({ selectedPlatform, setSelectedPlatform, language }) => {
 
       const createdJob = await createJobResponse.json();
       const jobId = createdJob?.job_id;
-      if (!jobId) {
-        throw new Error(t.downloadError);
-      }
+      if (!jobId) throw new Error(t.downloadError);
 
       const stageLabelById = {
         queued: t.processingQueued,
@@ -218,23 +208,14 @@ const Hero = ({ selectedPlatform, setSelectedPlatform, language }) => {
 
       let jobDone = false;
       while (!jobDone) {
-        // eslint-disable-next-line no-await-in-loop
         await new Promise((resolve) => setTimeout(resolve, 900));
-        // eslint-disable-next-line no-await-in-loop
         const statusResponse = await fetch(`${API_BASE_URL}/download/${jobId}/status`);
-        if (!statusResponse.ok) {
-          throw new Error(t.downloadError);
-        }
-        // eslint-disable-next-line no-await-in-loop
+        if (!statusResponse.ok) throw new Error(t.downloadError);
         const statusData = await statusResponse.json();
         setProcessingLabel(stageLabelById[statusData.stage] || t.processing);
 
-        if (statusData.status === 'error') {
-          throw new Error(statusData.error || t.downloadError);
-        }
-        if (statusData.status === 'done') {
-          jobDone = true;
-        }
+        if (statusData.status === 'error') throw new Error(statusData.error || t.downloadError);
+        if (statusData.status === 'done') jobDone = true;
       }
 
       const downloadUrl = `${API_BASE_URL}/download/${jobId}/file`;
@@ -277,7 +258,7 @@ const Hero = ({ selectedPlatform, setSelectedPlatform, language }) => {
           </Badge>
 
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold font-['Space_Grotesk'] mb-6 leading-tight">
-            {t.title} <span className="text-gradient">{t.titleAccent}</span>
+            {heroTitle.lead} <span className="text-gradient">{heroTitle.accent}</span>
           </h1>
 
           <p className="text-lg sm:text-xl text-muted-foreground max-w-3xl mx-auto mb-8">{t.subtitle}</p>
@@ -302,38 +283,6 @@ const Hero = ({ selectedPlatform, setSelectedPlatform, language }) => {
               >
                 <ClipboardPaste className="w-5 h-5" />
               </button>
-            </div>
-          </div>
-
-          <div className="mb-6">
-            <label className="text-sm font-medium mb-3 block text-foreground">{t.platform}</label>
-            <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-              <Button
-                variant={selectedPlatform === 'auto' ? 'default' : 'outline'}
-                onClick={() => setSelectedPlatform('auto')}
-                className={`h-auto py-3 flex flex-col items-center gap-1 ${
-                  selectedPlatform === 'auto' ? 'platform-gradient platform-glow border-0 text-[hsl(var(--on-platform))]' : ''
-                }`}
-              >
-                <Sparkles className="w-5 h-5" />
-                <span className="text-xs">{t.auto}</span>
-              </Button>
-              {platforms.map((platform) => {
-                const Icon = platform.icon;
-                return (
-                  <Button
-                    key={platform.id}
-                    variant={selectedPlatform === platform.id ? 'default' : 'outline'}
-                    onClick={() => setSelectedPlatform(platform.id)}
-                    className={`h-auto py-3 flex flex-col items-center gap-1 ${
-                      selectedPlatform === platform.id ? 'platform-gradient platform-glow border-0 text-[hsl(var(--on-platform))]' : ''
-                    }`}
-                  >
-                    <Icon className="w-5 h-5" />
-                    <span className="text-xs">{platform.name.split('/')[0]}</span>
-                  </Button>
-                );
-              })}
             </div>
           </div>
 
@@ -463,5 +412,3 @@ const Hero = ({ selectedPlatform, setSelectedPlatform, language }) => {
 };
 
 export default Hero;
-
-
