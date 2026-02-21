@@ -3,6 +3,7 @@ const fsp = require("fs/promises");
 const os = require("os");
 const path = require("path");
 const { spawn } = require("child_process");
+const archiver = require("archiver");
 const { BIN_DIR, BACKEND_DIR } = require("../config/paths");
 
 const IS_WIN = process.platform === "win32";
@@ -205,6 +206,31 @@ async function findNewestFile(dirPath) {
   return newest;
 }
 
+async function listDownloadedFiles(dirPath) {
+  const entries = await fsp.readdir(dirPath, { withFileTypes: true });
+  return entries
+    .filter((entry) => entry.isFile())
+    .map((entry) => path.join(dirPath, entry.name))
+    .filter((file) => !file.endsWith(".part") && !file.endsWith(".ytdl"));
+}
+
+async function createZipArchive(targetPath, files) {
+  await new Promise((resolve, reject) => {
+    const output = fs.createWriteStream(targetPath);
+    const archive = archiver("zip", { zlib: { level: 9 } });
+
+    output.on("close", resolve);
+    output.on("error", reject);
+    archive.on("error", reject);
+
+    archive.pipe(output);
+    for (const file of files) {
+      archive.file(file, { name: path.basename(file) });
+    }
+    archive.finalize();
+  });
+}
+
 async function downloadMedia(payload, onProgress) {
   const {
     url,
@@ -364,24 +390,39 @@ async function downloadMedia(payload, onProgress) {
           progress: 99,
         });
       }
-      const mediaFile = await findNewestFile(tmpDir);
-      if (!mediaFile) {
+      const imageExts = new Set([".jpg", ".jpeg", ".png", ".webp", ".bmp", ".gif", ".heic"]);
+      const files = await listDownloadedFiles(tmpDir);
+      const imageFiles = files
+        .filter((file) => imageExts.has(path.extname(file).toLowerCase()))
+        .sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" }));
+
+      if (imageFiles.length === 0) {
         const err = new Error("No se genero ninguna imagen");
         err.status = 400;
         throw err;
       }
-      const imageExts = new Set([".jpg", ".jpeg", ".png", ".webp", ".bmp", ".gif", ".heic"]);
-      const actualExt = path.extname(mediaFile).toLowerCase();
-      if (!imageExts.has(actualExt)) {
-        const err = new Error("La URL no corresponde a una imagen descargable");
-        err.status = 400;
-        throw err;
+
+      const baseTitle = safeFilename(
+        fetchedTitle || path.parse(imageFiles[0]).name,
+        "imagen",
+      );
+
+      if (imageFiles.length === 1) {
+        const imageFile = imageFiles[0];
+        const ext = path.extname(imageFile).toLowerCase();
+        return {
+          tmpDir,
+          filePath: imageFile,
+          fileName: `${baseTitle}${ext}`,
+        };
       }
-      const finalTitle = safeFilename(fetchedTitle || path.parse(mediaFile).name, "imagen");
+
+      const zipPath = path.join(tmpDir, `${baseTitle}.zip`);
+      await createZipArchive(zipPath, imageFiles);
       return {
         tmpDir,
-        filePath: mediaFile,
-        fileName: `${finalTitle}${actualExt}`,
+        filePath: zipPath,
+        fileName: `${baseTitle}.zip`,
       };
     } catch (error) {
       await fsp.rm(tmpDir, { recursive: true, force: true });

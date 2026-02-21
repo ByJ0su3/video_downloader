@@ -1,4 +1,4 @@
-ï»¿import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Card } from './ui/card';
@@ -20,11 +20,11 @@ const platforms = [
 
 const textByLang = {
   es: {
-    badge: 'RÃ¡pido, seguro y sin lÃ­mites',
+    badge: 'Rápido, seguro y sin límites',
     title: 'Descarga videos o convierte a',
-    titleAccent: 'MP3 en mÃ¡xima calidad',
+    titleAccent: 'MP3 en máxima calidad',
     subtitle: 'Pega un link de YouTube, Twitter, Instagram, Twitch o TikTok y descarga en segundos.',
-    inputPlaceholder: 'Pega aquÃ­ tu enlace de video...',
+    inputPlaceholder: 'Pega aquí tu enlace de video...',
     platform: 'Plataforma',
     auto: 'Auto',
     format: 'Formato',
@@ -34,7 +34,7 @@ const textByLang = {
     audioQuality: 'Calidad de audio',
     videoQuality: 'Calidad de video',
     videoFps: 'FPS',
-    max: 'MÃ¡ximo',
+    max: 'Máximo',
     best: 'Mejor disponible',
     sourceFps: 'FPS original',
     processing: 'Procesando...',
@@ -43,9 +43,9 @@ const textByLang = {
     processingDownloading: 'Descargando en servidor...',
     processingFinalizing: 'Finalizando archivo...',
     download: 'Descargar',
-    note: 'Respetamos los lÃ­mites de cada fuente. La calidad depende del audio/video original.',
+    note: 'Respetamos los límites de cada fuente. La calidad depende del audio/video original.',
     urlRequired: 'Por favor, ingresa un enlace',
-    platformRequired: 'No pudimos detectar la plataforma. SelecciÃ³nala manualmente.',
+    platformRequired: 'No pudimos detectar la plataforma. Selecciónala manualmente.',
     platformDetected: 'Plataforma detectada',
     pasteOk: 'Enlace pegado desde portapapeles',
     pasteError: 'No se pudo leer el portapapeles',
@@ -118,6 +118,12 @@ const Hero = ({ selectedPlatform, setSelectedPlatform, language }) => {
     return null;
   };
   const imageFormatEnabled = selectedPlatform === 'instagram' || (selectedPlatform === 'auto' && detectPlatform(url) === 'instagram');
+
+  useEffect(() => {
+    if (format === 'image' && !imageFormatEnabled) {
+      setFormat('video');
+    }
+  }, [format, imageFormatEnabled]);
 
   const handleUrlChange = (e) => {
     const newUrl = e.target.value;
@@ -457,3 +463,5 @@ const Hero = ({ selectedPlatform, setSelectedPlatform, language }) => {
 };
 
 export default Hero;
+
+
