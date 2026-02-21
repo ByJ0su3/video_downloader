@@ -48,16 +48,16 @@ function localBinPath(baseName) {
 }
 
 function resolveYtDlpCommand() {
-  if (process.env.YTDLP_PATH) {
-    return { cmd: process.env.YTDLP_PATH, argsPrefix: [] };
-  }
-
   const local = localBinPath("yt-dlp");
-  if (fs.existsSync(local)) {
-    return { cmd: local, argsPrefix: [] };
-  }
-
-  return { cmd: "yt-dlp", argsPrefix: [] };
+  return [
+    process.env.YTDLP_PATH ? { cmd: process.env.YTDLP_PATH, argsPrefix: [] } : null,
+    fs.existsSync(local) ? { cmd: local, argsPrefix: [] } : null,
+    { cmd: "/usr/bin/yt-dlp", argsPrefix: [] },
+    { cmd: "/usr/local/bin/yt-dlp", argsPrefix: [] },
+    { cmd: "yt-dlp", argsPrefix: [] },
+    { cmd: "python3", argsPrefix: ["-m", "yt_dlp"] },
+    { cmd: "python", argsPrefix: ["-m", "yt_dlp"] },
+  ].filter(Boolean);
 }
 
 function resolveFfmpegLocation() {
@@ -122,6 +122,27 @@ function runCommand(cmd, args, timeoutMs) {
   });
 }
 
+async function runWithCandidates(candidates, args, timeoutMs) {
+  let lastError = null;
+  for (const candidate of candidates) {
+    const fullArgs = [...candidate.argsPrefix, ...args];
+    try {
+      return await runCommand(candidate.cmd, fullArgs, timeoutMs);
+    } catch (error) {
+      lastError = error;
+      if (error && error.code === "ENOENT") {
+        continue;
+      }
+      throw error;
+    }
+  }
+
+  if (lastError) {
+    throw lastError;
+  }
+  throw new Error("No se encontro un ejecutable para yt-dlp");
+}
+
 async function findNewestFile(dirPath) {
   const entries = await fsp.readdir(dirPath, { withFileTypes: true });
   const files = entries
@@ -170,13 +191,12 @@ app.post("/api/download", async (req, res) => {
     return;
   }
 
-  const { cmd: ytdlpCmd, argsPrefix } = resolveYtDlpCommand();
+  const ytdlpCandidates = resolveYtDlpCommand();
   const ffmpegLocation = resolveFfmpegLocation();
   const tmpDir = await fsp.mkdtemp(path.join(os.tmpdir(), "video-downloader-"));
   const outputTemplate = path.join(tmpDir, "%(title).80s-%(id)s.%(ext)s");
 
   const args = [
-    ...argsPrefix,
     "--no-playlist",
     "--restrict-filenames",
     "--ffmpeg-location",
@@ -204,7 +224,7 @@ app.post("/api/download", async (req, res) => {
   args.push(url.trim());
 
   try {
-    await runCommand(ytdlpCmd, args, 10 * 60 * 1000);
+    await runWithCandidates(ytdlpCandidates, args, 10 * 60 * 1000);
     const mediaFile = await findNewestFile(tmpDir);
     if (!mediaFile) {
       throw new Error("No se genero ningun archivo");
@@ -221,7 +241,10 @@ app.post("/api/download", async (req, res) => {
     });
   } catch (error) {
     await fsp.rm(tmpDir, { recursive: true, force: true });
-    const message = error && error.message ? error.message : "No se pudo completar la descarga";
+    let message = error && error.message ? error.message : "No se pudo completar la descarga";
+    if (error && error.code === "ENOENT") {
+      message = "yt-dlp no esta instalado en el servidor";
+    }
     const status = message.includes("agotado") ? 504 : 400;
     res.status(status).json({ detail: message });
   }
