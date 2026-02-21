@@ -3,7 +3,7 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Card } from './ui/card';
 import { Badge } from './ui/badge';
-import { Download, Link2, Sparkles, Music, Video, ClipboardPaste } from 'lucide-react';
+import { Download, Link2, Sparkles, Music, Video, ClipboardPaste, Image as ImageIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { FaYoutube, FaTwitter, FaInstagram, FaTwitch, FaTiktok } from 'react-icons/fa';
 
@@ -29,6 +29,7 @@ const textByLang = {
     auto: 'Auto',
     format: 'Formato',
     video: 'Video',
+    image: 'Imagen',
     mp3: 'Audio MP3',
     audioQuality: 'Calidad de audio',
     videoQuality: 'Calidad de video',
@@ -53,6 +54,7 @@ const textByLang = {
     downloadError: 'No se pudo completar la descarga',
     videoSummary: (quality, fps) => `Video: ${quality}, ${fps}`,
     audioSummary: (quality) => `Audio: ${quality}`,
+    imageSummary: 'Imagen original',
   },
   en: {
     badge: 'Fast, safe and unlimited',
@@ -64,6 +66,7 @@ const textByLang = {
     auto: 'Auto',
     format: 'Format',
     video: 'Video',
+    image: 'Image',
     mp3: 'MP3 Audio',
     audioQuality: 'Audio quality',
     videoQuality: 'Video quality',
@@ -88,6 +91,7 @@ const textByLang = {
     downloadError: 'Download failed',
     videoSummary: (quality, fps) => `Video: ${quality}, ${fps}`,
     audioSummary: (quality) => `Audio: ${quality}`,
+    imageSummary: 'Original image',
   },
 };
 
@@ -113,6 +117,7 @@ const Hero = ({ selectedPlatform, setSelectedPlatform, language }) => {
     }
     return null;
   };
+  const imageFormatEnabled = selectedPlatform === 'instagram' || (selectedPlatform === 'auto' && detectPlatform(url) === 'instagram');
 
   const handleUrlChange = (e) => {
     const newUrl = e.target.value;
@@ -238,10 +243,12 @@ const Hero = ({ selectedPlatform, setSelectedPlatform, language }) => {
       const summary =
         format === 'mp3'
           ? t.audioSummary(audioQuality === 'max' ? t.max : `${audioQuality} kbps`)
-          : t.videoSummary(
-              videoQuality === 'best' ? t.best : videoQuality,
-              videoFps === 'source' ? t.sourceFps : `${videoFps} FPS`,
-            );
+          : format === 'image'
+            ? t.imageSummary
+            : t.videoSummary(
+                videoQuality === 'best' ? t.best : videoQuality,
+                videoFps === 'source' ? t.sourceFps : `${videoFps} FPS`,
+              );
 
       toast.success(t.downloadStarted, { description: summary });
     } catch (error) {
@@ -326,7 +333,7 @@ const Hero = ({ selectedPlatform, setSelectedPlatform, language }) => {
 
           <div className="mb-6">
             <label className="text-sm font-medium mb-3 block text-foreground">{t.format}</label>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-3 gap-3">
               <Button
                 variant={format === 'video' ? 'default' : 'outline'}
                 onClick={() => setFormat('video')}
@@ -338,6 +345,19 @@ const Hero = ({ selectedPlatform, setSelectedPlatform, language }) => {
               >
                 <Video className="w-5 h-5 mr-2" />
                 {t.video}
+              </Button>
+              <Button
+                variant={format === 'image' ? 'default' : 'outline'}
+                onClick={() => setFormat('image')}
+                disabled={!imageFormatEnabled}
+                className={
+                  format === 'image'
+                    ? 'h-auto py-4 platform-gradient platform-glow border-0 text-[hsl(var(--on-platform))]'
+                    : 'h-auto py-4'
+                }
+              >
+                <ImageIcon className="w-5 h-5 mr-2" />
+                {t.image}
               </Button>
               <Button
                 variant={format === 'mp3' ? 'default' : 'outline'}
@@ -424,7 +444,7 @@ const Hero = ({ selectedPlatform, setSelectedPlatform, language }) => {
             ) : (
               <>
                 <Download className="w-5 h-5 mr-2" />
-                {t.download} {format === 'mp3' ? 'MP3' : t.video}
+                {t.download}
               </>
             )}
           </Button>
