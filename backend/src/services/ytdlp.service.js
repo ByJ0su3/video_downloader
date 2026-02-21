@@ -43,8 +43,12 @@ function resolveYtDlpCommandCandidates() {
 function resolveFfmpegLocation() {
   if (process.env.FFMPEG_PATH) return process.env.FFMPEG_PATH;
   const local = localBinPath("ffmpeg");
+  const localProbe = localBinPath("ffprobe");
+  if (fs.existsSync(local) && fs.existsSync(localProbe)) return BIN_DIR;
   if (fs.existsSync(local)) return local;
-  return "ffmpeg";
+  if (fs.existsSync("/usr/bin/ffmpeg")) return "/usr/bin";
+  if (fs.existsSync("/usr/local/bin/ffmpeg")) return "/usr/local/bin";
+  return null;
 }
 
 function qualityToHeight(videoQuality) {
@@ -278,11 +282,12 @@ async function downloadMedia(payload, onProgress) {
     "--retry-sleep",
     "http:2",
     ...platformArgs,
-    "--ffmpeg-location",
-    ffmpegLocation,
     "-o",
     outputTemplate,
   ];
+  if (ffmpegLocation) {
+    args.push("--ffmpeg-location", ffmpegLocation);
+  }
   if (cookiesPath) {
     args.push("--cookies", cookiesPath);
   }
@@ -502,6 +507,11 @@ async function downloadMedia(payload, onProgress) {
     if (/sign in to confirm you.?re not a bot/i.test(message)) {
       const err = new Error("YouTube requiere cookies de sesion para este video");
       err.status = 403;
+      throw err;
+    }
+    if (/ffprobe and ffmpeg not found/i.test(message)) {
+      const err = new Error("Faltan ffmpeg/ffprobe en el servidor. Configura Railway con ffmpeg instalado.");
+      err.status = 500;
       throw err;
     }
     if (/http error 403: forbidden/i.test(message)) {
