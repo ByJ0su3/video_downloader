@@ -4,10 +4,19 @@ import {
   getDownloadFileInfo,
 } from "../services/ytdlp.service.js";
 
+function runtimeVersion() {
+  return (
+    process.env.RAILWAY_GIT_COMMIT_SHA ||
+    process.env.BACKEND_VERSION ||
+    "dev"
+  );
+}
+
 function root(_req, res) {
   res.json({
     ok: true,
     message: "Video downloader API OK",
+    version: runtimeVersion(),
   });
 }
 
@@ -15,6 +24,7 @@ function health(_req, res) {
   res.json({
     ok: true,
     timestamp: new Date().toISOString(),
+    version: runtimeVersion(),
   });
 }
 
