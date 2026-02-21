@@ -300,6 +300,18 @@ function buildYtDlpArgs(job) {
   return { baseArgs: args, url, type };
 }
 
+function stripExtractorArgs(args) {
+  const out = [];
+  for (let i = 0; i < args.length; i += 1) {
+    if (args[i] === "--extractor-args") {
+      i += 1;
+      continue;
+    }
+    out.push(args[i]);
+  }
+  return out;
+}
+
 function shouldSkipRetry(logsText) {
   const text = String(logsText || "").toLowerCase();
   return /login required|sign in|private|drm|cookies|no video could be found in this tweet/i.test(text);
@@ -372,6 +384,11 @@ async function runDownloadWithFallbacks(job) {
     attempts.push([...baseArgs, "-f", "bv*+ba/b", "--merge-output-format", "mp4", url]);
     attempts.push([...baseArgs, "-f", "b", "--remux-video", "mp4", url]);
     attempts.push([...baseArgs, "-f", "bestvideo*+bestaudio/best", "--merge-output-format", "mp4", url]);
+    if (job.payload.platform === "youtube") {
+      const noExtractorArgs = stripExtractorArgs(baseArgs);
+      attempts.push([...noExtractorArgs, "-f", "best", "--remux-video", "mp4", url]);
+      attempts.push([...noExtractorArgs, "-f", "bv*+ba/best", "--merge-output-format", "mp4", url]);
+    }
   } else {
     attempts.push([...baseArgs, "-x", "--audio-format", "mp3", "--audio-quality", "0", url]);
   }
