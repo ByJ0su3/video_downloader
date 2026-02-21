@@ -1,59 +1,88 @@
-const {
-  enqueueDownload,
-  getJob,
-  toPublicJob,
-  consumeJobFile,
-} = require("../services/download-jobs.service");
+import {
+  enqueueDownloadJob,
+  getPublicJob,
+  getDownloadFileInfo,
+} from "../services/ytdlp.service.js";
 
-async function health(_req, res) {
-  res.json({ ok: true, timestamp: new Date().toISOString() });
+function root(_req, res) {
+  res.json({
+    ok: true,
+    message: "Video downloader API OK",
+  });
 }
 
-async function root(_req, res) {
-  res.json({ message: "Video downloader API OK" });
+function health(_req, res) {
+  res.json({
+    ok: true,
+    timestamp: new Date().toISOString(),
+  });
 }
 
-async function download(req, res, next) {
+function createDownload(req, res, next) {
   try {
-    const job = enqueueDownload(req.body || {});
-    res.status(202).json({ job_id: job.id, status: job.status });
+    const payload = {
+      ...req.body,
+      cookiesPath: req.file?.path || null,
+    };
+    const job = enqueueDownloadJob(payload);
+    res.status(202).json(job);
   } catch (error) {
     next(error);
   }
 }
 
-async function downloadStatus(req, res) {
-  const job = getJob(req.params.jobId);
+function getDownloadStatus(req, res) {
+  const job = getPublicJob(req.params.id);
   if (!job) {
-    res.status(404).json({ detail: "Job no encontrado" });
+    res.status(404).json({
+      ok: false,
+      id: req.params.id,
+      status: "not_found",
+      error: "Job no encontrado",
+    });
     return;
   }
-  res.json(toPublicJob(job));
+  res.json(job);
 }
 
-async function downloadFile(req, res) {
-  const job = getJob(req.params.jobId);
-  if (!job) {
-    res.status(404).json({ detail: "Job no encontrado" });
+function downloadFile(req, res) {
+  const fileInfo = getDownloadFileInfo(req.params.id);
+  if (!fileInfo) {
+    res.status(404).json({
+      ok: false,
+      id: req.params.id,
+      status: "not_found",
+      error: "Job no encontrado",
+    });
     return;
   }
-  if (job.status !== "done" || !job.filePath) {
-    res.status(409).json({ detail: "Archivo aun no disponible" });
+  if (fileInfo.error) {
+    res.status(fileInfo.status || 409).json({
+      ok: false,
+      id: req.params.id,
+      status: "pending",
+      error: fileInfo.error,
+    });
     return;
   }
 
-  res.download(job.filePath, job.fileName, async (error) => {
-    await consumeJobFile(job);
+  res.download(fileInfo.filePath, fileInfo.fileName, async (error) => {
+    await fileInfo.onSent();
     if (error && !res.headersSent) {
-      res.status(500).json({ detail: "Error al enviar archivo" });
+      res.status(500).json({
+        ok: false,
+        id: req.params.id,
+        status: "error",
+        error: "No se pudo enviar el archivo",
+      });
     }
   });
 }
 
-module.exports = {
-  health,
+export {
   root,
-  download,
-  downloadStatus,
+  health,
+  createDownload,
+  getDownloadStatus,
   downloadFile,
 };

@@ -3,11 +3,11 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Card } from './ui/card';
 import { Badge } from './ui/badge';
-import { Download, Link2, Sparkles, Music, Video, ClipboardPaste, Image as ImageIcon } from 'lucide-react';
+import { Download, Link2, Sparkles, Music, Video, ClipboardPaste, ShieldCheck, KeyRound } from 'lucide-react';
 import { toast } from 'sonner';
 
-const API_BASE_URL =
-  process.env.REACT_APP_API_URL || 'https://videodownloader-production-8194.up.railway.app/api';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://videodownloader-production-8194.up.railway.app/api';
+const ENABLE_BROWSER_COOKIES = String(process.env.REACT_APP_ENABLE_BROWSER_COOKIES || 'false').toLowerCase() === 'true';
 
 const platformPatterns = [
   { id: 'youtube', pattern: /youtube\.com|youtu\.be/i },
@@ -19,96 +19,82 @@ const platformPatterns = [
 
 const textByLang = {
   es: {
-    badge: 'Rapido, seguro y sin limites',
-    subtitle: 'Pega un link de YouTube, Twitter, Instagram, Twitch o TikTok y descarga en segundos.',
+    badge: 'Rapido, seguro y con control de cookies',
+    subtitle: 'Descarga contenido publico o usa cookies.txt cuando la plataforma pida login.',
     inputPlaceholder: 'Pega aqui tu enlace...',
     format: 'Formato',
     video: 'Video',
-    image: 'Imagen',
-    mp3: 'Audio MP3',
-    audioQuality: 'Calidad de audio',
-    videoQuality: 'Calidad de video',
-    videoFps: 'FPS',
-    max: 'Maximo',
-    best: 'Mejor disponible',
-    sourceFps: 'FPS original',
+    audio: 'Audio MP3',
+    cookiesTitle: 'Autenticacion',
+    cookiesNone: 'Publico (sin cookies)',
+    cookiesUpload: 'Subir cookies.txt',
+    cookiesBrowser: 'cookies-from-browser (local)',
+    cookiesFile: 'Archivo cookies.txt (Netscape)',
+    cookiesHint: 'No subas cookies de cuentas sensibles.',
+    cookiesHelpTitle: 'Como preparar cookies.txt',
+    cookiesHelp1: 'Instala una extension confiable para exportar cookies en formato Netscape.',
+    cookiesHelp2: 'Inicia sesion solo en la plataforma objetivo (YouTube, Instagram, etc.).',
+    cookiesHelp3: 'Exporta cookies del dominio necesario y guarda el archivo como cookies.txt.',
+    cookiesHelp4: 'Sube el archivo aqui solo cuando el contenido requiera login.',
+    cookiesHelpWarn: 'No uses cookies de cuentas personales sensibles o con informacion financiera.',
+    viewInstructions: 'Ver instrucciones',
+    hideInstructions: 'Ocultar instrucciones',
+    playlist: 'Permitir playlist',
     processing: 'Procesando...',
-    processingQueued: 'En cola...',
-    processingPreparing: 'Preparando descarga...',
-    processingDownloading: 'Descargando en servidor...',
-    processingFinalizing: 'Finalizando archivo...',
+    progress: (v) => `${v}% completado`,
     download: 'Descargar',
-    note: 'Respetamos los limites de cada fuente. La calidad depende del audio/video original.',
+    note: 'No descargamos contenido privado o protegido por DRM. Si requiere login, usa cookies.txt.',
     urlRequired: 'Por favor, ingresa un enlace',
+    cookieFileRequired: 'Debes subir cookies.txt para modo upload',
     pasteOk: 'Enlace pegado desde portapapeles',
     pasteError: 'No se pudo leer el portapapeles',
-    ready: 'Listo para descargar',
     downloadStarted: 'Descarga iniciada',
     downloadError: 'No se pudo completar la descarga',
-    videoSummary: (quality, fps) => `Video: ${quality}, ${fps}`,
-    audioSummary: (quality) => `Audio: ${quality}`,
-    imageSummary: 'Imagen original',
-    titles: {
-      auto: { lead: 'Descarga videos o convierte a', accent: 'MP3 en maxima calidad' },
-      youtube: { lead: 'Descarga videos o convierte a MP3 en', accent: 'YouTube' },
-      twitter: { lead: 'Descarga videos en', accent: 'Twitter/X' },
-      instagram: { lead: 'Descarga videos o imagenes en', accent: 'Instagram' },
-      twitch: { lead: 'Descarga videos en', accent: 'Twitch' },
-      tiktok: { lead: 'Descarga videos en', accent: 'TikTok' },
-    },
   },
   en: {
-    badge: 'Fast, safe and unlimited',
-    subtitle: 'Paste a YouTube, Twitter, Instagram, Twitch or TikTok link and download in seconds.',
+    badge: 'Fast, safe and cookie-aware',
+    subtitle: 'Download public content or upload cookies.txt when login is required.',
     inputPlaceholder: 'Paste your link here...',
     format: 'Format',
     video: 'Video',
-    image: 'Image',
-    mp3: 'MP3 Audio',
-    audioQuality: 'Audio quality',
-    videoQuality: 'Video quality',
-    videoFps: 'FPS',
-    max: 'Maximum',
-    best: 'Best available',
-    sourceFps: 'Source FPS',
+    audio: 'MP3 Audio',
+    cookiesTitle: 'Authentication',
+    cookiesNone: 'Public (no cookies)',
+    cookiesUpload: 'Upload cookies.txt',
+    cookiesBrowser: 'cookies-from-browser (local)',
+    cookiesFile: 'cookies.txt file (Netscape)',
+    cookiesHint: 'Never upload cookies from sensitive accounts.',
+    cookiesHelpTitle: 'How to prepare cookies.txt',
+    cookiesHelp1: 'Install a trusted extension that exports cookies in Netscape format.',
+    cookiesHelp2: 'Sign in only to the target platform (YouTube, Instagram, etc.).',
+    cookiesHelp3: 'Export cookies for the needed domain and save as cookies.txt.',
+    cookiesHelp4: 'Upload it here only when the content requires login.',
+    cookiesHelpWarn: 'Do not use cookies from sensitive personal or financial accounts.',
+    viewInstructions: 'View instructions',
+    hideInstructions: 'Hide instructions',
+    playlist: 'Allow playlist',
     processing: 'Processing...',
-    processingQueued: 'Queued...',
-    processingPreparing: 'Preparing download...',
-    processingDownloading: 'Downloading on server...',
-    processingFinalizing: 'Finalizing file...',
+    progress: (v) => `${v}% completed`,
     download: 'Download',
-    note: 'Quality depends on the original source audio/video.',
+    note: 'Private/DRM protected content is not supported. Use cookies.txt when login is required.',
     urlRequired: 'Please enter a link',
+    cookieFileRequired: 'You must upload cookies.txt for upload mode',
     pasteOk: 'Link pasted from clipboard',
     pasteError: 'Clipboard access failed',
-    ready: 'Ready to download',
     downloadStarted: 'Download started',
     downloadError: 'Download failed',
-    videoSummary: (quality, fps) => `Video: ${quality}, ${fps}`,
-    audioSummary: (quality) => `Audio: ${quality}`,
-    imageSummary: 'Original image',
-    titles: {
-      auto: { lead: 'Download videos or convert to', accent: 'MP3 in highest quality' },
-      youtube: { lead: 'Download videos or convert to MP3 on', accent: 'YouTube' },
-      twitter: { lead: 'Download videos on', accent: 'Twitter/X' },
-      instagram: { lead: 'Download videos or images on', accent: 'Instagram' },
-      twitch: { lead: 'Download videos on', accent: 'Twitch' },
-      tiktok: { lead: 'Download videos on', accent: 'TikTok' },
-    },
   },
 };
 
-const videoQualities = ['2160p (4K)', '1440p (2K)', '1080p', '720p', '480p', 'best'];
-const videoFpsOptions = ['source', '120', '60', '30'];
-
 const Hero = ({ selectedPlatform, setSelectedPlatform, language }) => {
   const [url, setUrl] = useState('');
-  const [format, setFormat] = useState('video');
-  const [audioQuality, setAudioQuality] = useState('max');
-  const [videoQuality, setVideoQuality] = useState('best');
-  const [videoFps, setVideoFps] = useState('source');
+  const [type, setType] = useState('video');
+  const [cookiesMode, setCookiesMode] = useState('none');
+  const [cookiesFile, setCookiesFile] = useState(null);
+  const [playlist, setPlaylist] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingLabel, setProcessingLabel] = useState('');
+  const [showCookieHelp, setShowCookieHelp] = useState(false);
 
   const t = textByLang[language];
 
@@ -117,24 +103,28 @@ const Hero = ({ selectedPlatform, setSelectedPlatform, language }) => {
     return match ? match.id : null;
   };
 
-  const imageFormatEnabled = selectedPlatform === 'instagram' || (selectedPlatform === 'auto' && detectPlatform(url) === 'instagram');
-
-  const heroTitle = useMemo(() => {
-    return t.titles[selectedPlatform] || t.titles.auto;
-  }, [selectedPlatform, t.titles]);
+  const titleByPlatform = useMemo(() => {
+    const map = {
+      auto: language === 'es' ? 'Descarga video o MP3' : 'Download video or MP3',
+      youtube: 'YouTube',
+      twitter: 'Twitter/X',
+      instagram: 'Instagram',
+      twitch: 'Twitch',
+      tiktok: 'TikTok',
+    };
+    return map[selectedPlatform] || map.auto;
+  }, [language, selectedPlatform]);
 
   useEffect(() => {
-    if (format === 'image' && !imageFormatEnabled) {
-      setFormat('video');
+    if (cookiesMode !== 'upload') {
+      setCookiesFile(null);
     }
-  }, [format, imageFormatEnabled]);
+  }, [cookiesMode]);
 
   const handleUrlChange = (e) => {
     const newUrl = e.target.value;
     setUrl(newUrl);
-
     if (!newUrl.trim()) return;
-
     if (selectedPlatform === 'auto') {
       const detected = detectPlatform(newUrl);
       if (detected) setSelectedPlatform(detected);
@@ -145,7 +135,6 @@ const Hero = ({ selectedPlatform, setSelectedPlatform, language }) => {
     try {
       const clipboardText = await navigator.clipboard.readText();
       if (!clipboardText) return;
-
       setUrl(clipboardText);
       if (selectedPlatform === 'auto') {
         const detected = detectPlatform(clipboardText);
@@ -157,87 +146,87 @@ const Hero = ({ selectedPlatform, setSelectedPlatform, language }) => {
     }
   };
 
+  const createRequest = () => {
+    if (cookiesMode === 'upload') {
+      const form = new FormData();
+      form.append('url', url.trim());
+      form.append('type', type);
+      form.append('cookiesMode', cookiesMode);
+      form.append('playlist', String(playlist));
+      form.append('cookiesFile', cookiesFile);
+      return { body: form };
+    }
+
+    return {
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        url: url.trim(),
+        type,
+        cookiesMode,
+        playlist,
+      }),
+    };
+  };
+
   const handleDownload = async () => {
     if (!url.trim()) {
       toast.error(t.urlRequired);
       return;
     }
+    if (cookiesMode === 'upload' && !cookiesFile) {
+      toast.error(t.cookieFileRequired);
+      return;
+    }
 
     setIsProcessing(true);
-    setProcessingLabel(t.processingQueued);
+    setProcessingLabel(t.processing);
 
     try {
+      const request = createRequest();
       const createJobResponse = await fetch(`${API_BASE_URL}/download`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          url: url.trim(),
-          format,
-          audio_quality: audioQuality,
-          video_quality: videoQuality,
-          video_fps: videoFps,
-          platform: selectedPlatform,
-        }),
+        ...request,
       });
 
+      const createdJob = await createJobResponse.json();
       if (!createJobResponse.ok) {
-        let detail = t.downloadError;
-        try {
-          const errorData = await createJobResponse.json();
-          if (errorData?.detail) detail = errorData.detail;
-        } catch {
-          // no-op
-        }
-        throw new Error(detail);
+        throw new Error(createdJob?.error || t.downloadError);
       }
 
-      const createdJob = await createJobResponse.json();
-      const jobId = createdJob?.job_id;
+      const jobId = createdJob?.id;
       if (!jobId) throw new Error(t.downloadError);
 
-      const stageLabelById = {
-        queued: t.processingQueued,
-        starting: t.processingPreparing,
-        preparing: t.processingPreparing,
-        downloading: t.processingDownloading,
-        finalizing: t.processingFinalizing,
-        ready: t.ready,
-      };
-
-      let jobDone = false;
-      while (!jobDone) {
+      let finalStatus = createdJob;
+      while (true) {
         await new Promise((resolve) => setTimeout(resolve, 900));
         const statusResponse = await fetch(`${API_BASE_URL}/download/${jobId}/status`);
-        if (!statusResponse.ok) throw new Error(t.downloadError);
         const statusData = await statusResponse.json();
-        setProcessingLabel(stageLabelById[statusData.stage] || t.processing);
+        if (!statusResponse.ok) throw new Error(statusData?.error || t.downloadError);
 
-        if (statusData.status === 'error') throw new Error(statusData.error || t.downloadError);
-        if (statusData.status === 'done') jobDone = true;
+        finalStatus = statusData;
+        if (statusData?.progress != null) {
+          setProcessingLabel(t.progress(statusData.progress));
+        } else {
+          setProcessingLabel(t.processing);
+        }
+
+        if (statusData.status === 'error') {
+          throw new Error(statusData?.error || t.downloadError);
+        }
+        if (statusData.status === 'done') break;
       }
 
-      const downloadUrl = `${API_BASE_URL}/download/${jobId}/file`;
+      const downloadPath = finalStatus?.downloadUrl || `/api/download/${jobId}/file`;
+      const absoluteUrl = downloadPath.startsWith('http') ? downloadPath : `${API_BASE_URL}${downloadPath.replace('/api', '')}`;
       const link = document.createElement('a');
-      link.href = downloadUrl;
-      link.setAttribute('download', '');
+      link.href = absoluteUrl;
+      link.setAttribute('download', finalStatus?.fileName || '');
       link.rel = 'noopener';
       document.body.appendChild(link);
       link.click();
       link.remove();
 
-      const summary =
-        format === 'mp3'
-          ? t.audioSummary(audioQuality === 'max' ? t.max : `${audioQuality} kbps`)
-          : format === 'image'
-            ? t.imageSummary
-            : t.videoSummary(
-                videoQuality === 'best' ? t.best : videoQuality,
-                videoFps === 'source' ? t.sourceFps : `${videoFps} FPS`,
-              );
-
-      toast.success(t.downloadStarted, { description: summary });
+      toast.success(t.downloadStarted);
     } catch (error) {
       toast.error(error?.message || t.downloadError);
     } finally {
@@ -258,7 +247,8 @@ const Hero = ({ selectedPlatform, setSelectedPlatform, language }) => {
           </Badge>
 
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold font-['Space_Grotesk'] mb-6 leading-tight">
-            {heroTitle.lead} <span className="text-gradient">{heroTitle.accent}</span>
+            {language === 'es' ? 'Descarga en segundos desde' : 'Download in seconds from'}{' '}
+            <span className="text-gradient">{titleByPlatform}</span>
           </h1>
 
           <p className="text-lg sm:text-xl text-muted-foreground max-w-3xl mx-auto mb-8">{t.subtitle}</p>
@@ -288,103 +278,114 @@ const Hero = ({ selectedPlatform, setSelectedPlatform, language }) => {
 
           <div className="mb-6">
             <label className="text-sm font-medium mb-3 block text-foreground">{t.format}</label>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 gap-3">
               <Button
-                variant={format === 'video' ? 'default' : 'outline'}
-                onClick={() => setFormat('video')}
-                className={
-                  format === 'video'
-                    ? 'h-auto py-4 platform-gradient platform-glow border-0 text-[hsl(var(--on-platform))]'
-                    : 'h-auto py-4'
-                }
+                variant={type === 'video' ? 'default' : 'outline'}
+                onClick={() => setType('video')}
+                className={type === 'video' ? 'h-auto py-4 platform-gradient border-0 text-[hsl(var(--on-platform))]' : 'h-auto py-4'}
               >
                 <Video className="w-5 h-5 mr-2" />
                 {t.video}
               </Button>
               <Button
-                variant={format === 'image' ? 'default' : 'outline'}
-                onClick={() => setFormat('image')}
-                disabled={!imageFormatEnabled}
-                className={
-                  format === 'image'
-                    ? 'h-auto py-4 platform-gradient platform-glow border-0 text-[hsl(var(--on-platform))]'
-                    : 'h-auto py-4'
-                }
-              >
-                <ImageIcon className="w-5 h-5 mr-2" />
-                {t.image}
-              </Button>
-              <Button
-                variant={format === 'mp3' ? 'default' : 'outline'}
-                onClick={() => setFormat('mp3')}
-                className={
-                  format === 'mp3'
-                    ? 'h-auto py-4 platform-gradient platform-glow border-0 text-[hsl(var(--on-platform))]'
-                    : 'h-auto py-4'
-                }
+                variant={type === 'audio' ? 'default' : 'outline'}
+                onClick={() => setType('audio')}
+                className={type === 'audio' ? 'h-auto py-4 platform-gradient border-0 text-[hsl(var(--on-platform))]' : 'h-auto py-4'}
               >
                 <Music className="w-5 h-5 mr-2" />
-                {t.mp3}
+                {t.audio}
               </Button>
             </div>
           </div>
 
-          {format === 'mp3' && (
-            <div className="mb-6">
-              <label className="text-sm font-medium mb-3 block text-foreground">{t.audioQuality}</label>
-              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-                {['128', '192', '256', '320', 'max'].map((q) => (
-                  <Button
-                    key={q}
-                    variant={audioQuality === q ? 'default' : 'outline'}
-                    onClick={() => setAudioQuality(q)}
-                    className={audioQuality === q ? 'platform-gradient border-0 text-[hsl(var(--on-platform))]' : ''}
-                    size="sm"
-                  >
-                    {q === 'max' ? t.max : `${q} kbps`}
-                  </Button>
-                ))}
-              </div>
+          <div className="mb-6">
+            <label className="text-sm font-medium mb-3 block text-foreground">{t.cookiesTitle}</label>
+            <div className={`grid gap-2 ${ENABLE_BROWSER_COOKIES ? 'grid-cols-1 sm:grid-cols-3' : 'grid-cols-1 sm:grid-cols-2'}`}>
+              <Button
+                type="button"
+                variant={cookiesMode === 'none' ? 'default' : 'outline'}
+                onClick={() => setCookiesMode('none')}
+                className={cookiesMode === 'none' ? 'platform-gradient border-0 text-[hsl(var(--on-platform))]' : ''}
+                size="sm"
+              >
+                <ShieldCheck className="w-4 h-4 mr-2" />
+                {t.cookiesNone}
+              </Button>
+              <Button
+                type="button"
+                variant={cookiesMode === 'upload' ? 'default' : 'outline'}
+                onClick={() => setCookiesMode('upload')}
+                className={cookiesMode === 'upload' ? 'platform-gradient border-0 text-[hsl(var(--on-platform))]' : ''}
+                size="sm"
+              >
+                <KeyRound className="w-4 h-4 mr-2" />
+                {t.cookiesUpload}
+              </Button>
+              {ENABLE_BROWSER_COOKIES && (
+                <Button
+                  type="button"
+                  variant={cookiesMode === 'browser' ? 'default' : 'outline'}
+                  onClick={() => setCookiesMode('browser')}
+                  className={cookiesMode === 'browser' ? 'platform-gradient border-0 text-[hsl(var(--on-platform))]' : ''}
+                  size="sm"
+                >
+                  {t.cookiesBrowser}
+                </Button>
+              )}
             </div>
-          )}
 
-          {format === 'video' && (
-            <div className="mb-6 space-y-4">
-              <div>
-                <label className="text-sm font-medium mb-3 block text-foreground">{t.videoQuality}</label>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                  {videoQualities.map((q) => (
-                    <Button
-                      key={q}
-                      variant={videoQuality === q ? 'default' : 'outline'}
-                      onClick={() => setVideoQuality(q)}
-                      className={videoQuality === q ? 'platform-gradient border-0 text-[hsl(var(--on-platform))]' : ''}
-                      size="sm"
-                    >
-                      {q === 'best' ? t.best : q}
-                    </Button>
-                  ))}
-                </div>
+            {cookiesMode === 'upload' && (
+              <div className="mt-3">
+                <label className="text-xs font-medium mb-2 block text-muted-foreground">{t.cookiesFile}</label>
+                <Input
+                  type="file"
+                  accept=".txt,text/plain"
+                  onChange={(e) => setCookiesFile(e.target.files?.[0] || null)}
+                  className="h-11 bg-secondary/50 border-border/50"
+                />
+                <p className="text-xs text-muted-foreground mt-2">{t.cookiesHint}</p>
               </div>
+            )}
+          </div>
 
-              <div>
-                <label className="text-sm font-medium mb-3 block text-foreground">{t.videoFps}</label>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  {videoFpsOptions.map((fps) => (
-                    <Button
-                      key={fps}
-                      variant={videoFps === fps ? 'default' : 'outline'}
-                      onClick={() => setVideoFps(fps)}
-                      className={videoFps === fps ? 'platform-gradient border-0 text-[hsl(var(--on-platform))]' : ''}
-                      size="sm"
-                    >
-                      {fps === 'source' ? t.sourceFps : `${fps} FPS`}
-                    </Button>
-                  ))}
-                </div>
-              </div>
+          <div className="mb-6 rounded-xl border border-border/50 bg-secondary/20 px-4 py-3">
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-sm font-semibold text-foreground">{t.cookiesHelpTitle}</p>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setShowCookieHelp((prev) => !prev)}
+                className="h-8 border-border/60 bg-background/40"
+              >
+                {showCookieHelp ? t.hideInstructions : t.viewInstructions}
+              </Button>
             </div>
-          )}
+            {showCookieHelp && (
+              <>
+                <ul className="text-xs text-muted-foreground space-y-1 list-disc pl-4 mt-3">
+                  <li>{t.cookiesHelp1}</li>
+                  <li>{t.cookiesHelp2}</li>
+                  <li>{t.cookiesHelp3}</li>
+                  <li>{t.cookiesHelp4}</li>
+                </ul>
+                <p className="text-xs text-amber-400 mt-3">{t.cookiesHelpWarn}</p>
+              </>
+            )}
+          </div>
+
+          <div className="mb-6 flex items-center justify-between rounded-xl border border-border/50 bg-secondary/30 px-4 py-3">
+            <span className="text-sm text-foreground">{t.playlist}</span>
+            <Button
+              type="button"
+              variant={playlist ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setPlaylist((prev) => !prev)}
+              className={playlist ? 'platform-gradient border-0 text-[hsl(var(--on-platform))]' : ''}
+            >
+              {playlist ? 'ON' : 'OFF'}
+            </Button>
+          </div>
 
           <Button
             onClick={handleDownload}

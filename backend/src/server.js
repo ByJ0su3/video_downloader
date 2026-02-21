@@ -1,5 +1,5 @@
-const app = require("./app");
-const { startJobsSweeper } = require("./services/download-jobs.service");
+import app from "./app.js";
+import { startJobsSweeper } from "./services/ytdlp.service.js";
 
 const PORT = Number(process.env.PORT || 8000);
 

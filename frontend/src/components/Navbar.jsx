@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Button } from './ui/button';
 import { Menu, X, Download, Sun, Moon, Sparkles } from 'lucide-react';
 import { FaYoutube, FaTwitter, FaInstagram, FaTwitch, FaTiktok } from 'react-icons/fa';
@@ -33,6 +33,12 @@ const Navbar = ({ language, setLanguage, theme, setTheme, selectedPlatform, setS
   };
 
   const t = copy[language];
+  const languageLabel = language === 'es' ? 'ES' : 'EN';
+  const selectedLabel = useMemo(() => {
+    const selected = platformOptions.find((platform) => platform.id === selectedPlatform);
+    if (!selected) return 'Auto';
+    return language === 'es' ? selected.labelEs : selected.labelEn;
+  }, [language, selectedPlatform]);
 
   const scrollToSection = (id) => {
     const element = document.getElementById(id);
@@ -43,17 +49,22 @@ const Navbar = ({ language, setLanguage, theme, setTheme, selectedPlatform, setS
   };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 glass-effect border-b border-border/50">
+    <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border/60 bg-background/85 backdrop-blur-xl">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 rounded-lg platform-gradient flex items-center justify-center platform-glow">
+        <div className="flex items-center justify-between h-16 gap-3">
+          <div className="flex items-center min-w-0 space-x-3">
+            <div className="w-9 h-9 rounded-xl platform-gradient flex items-center justify-center platform-glow shadow-md shadow-black/20">
               <Download className="w-5 h-5 text-[hsl(var(--on-platform))]" />
             </div>
-            <span className="text-xl font-bold font-['Space_Grotesk'] text-foreground">LinkRip</span>
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="text-xl leading-none font-bold font-['Space_Grotesk'] text-foreground tracking-tight">LinkRip</span>
+              <span className="hidden sm:inline-flex text-[11px] px-2 py-0.5 rounded-full border border-border/70 text-muted-foreground">
+                {selectedLabel}
+              </span>
+            </div>
           </div>
 
-          <div className="hidden lg:flex items-center gap-2">
+          <div className="hidden xl:flex items-center gap-2 rounded-2xl border border-border/60 bg-card/70 px-2 py-1">
             {platformOptions.map((platform) => {
               const Icon = platform.icon;
               return (
@@ -64,8 +75,8 @@ const Navbar = ({ language, setLanguage, theme, setTheme, selectedPlatform, setS
                   onClick={() => setSelectedPlatform(platform.id)}
                   className={
                     selectedPlatform === platform.id
-                      ? 'platform-gradient platform-glow border-0 text-[hsl(var(--on-platform))]'
-                      : 'text-foreground'
+                      ? 'platform-gradient platform-glow border-0 text-[hsl(var(--on-platform))] shadow-md shadow-black/25'
+                      : 'text-foreground border-border/60 bg-background/50 hover:bg-accent/70'
                   }
                 >
                   <Icon className="w-4 h-4 mr-1" />
@@ -78,19 +89,19 @@ const Navbar = ({ language, setLanguage, theme, setTheme, selectedPlatform, setS
           <div className="hidden md:flex items-center space-x-3">
             <button
               onClick={() => scrollToSection('how-it-works')}
-              className="text-sm text-muted-foreground hover:text-foreground fast-transition"
+              className="text-sm text-muted-foreground hover:text-foreground fast-transition font-medium"
             >
               {t.how}
             </button>
             <button
               onClick={() => scrollToSection('platforms')}
-              className="text-sm text-muted-foreground hover:text-foreground fast-transition"
+              className="text-sm text-muted-foreground hover:text-foreground fast-transition font-medium"
             >
               {t.platforms}
             </button>
             <button
               onClick={() => scrollToSection('mp3-quality')}
-              className="text-sm text-muted-foreground hover:text-foreground fast-transition"
+              className="text-sm text-muted-foreground hover:text-foreground fast-transition font-medium"
             >
               {t.quality}
             </button>
@@ -98,15 +109,15 @@ const Navbar = ({ language, setLanguage, theme, setTheme, selectedPlatform, setS
               variant="outline"
               size="sm"
               onClick={() => setLanguage(language === 'es' ? 'en' : 'es')}
-              className="text-foreground"
+              className="text-foreground border-border/70 bg-background/60 hover:bg-accent/70 min-w-[52px]"
             >
-              {t.lang}
+              {languageLabel}
             </Button>
             <Button
               variant="outline"
               size="icon"
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-              className="text-foreground"
+              className="text-foreground border-border/70 bg-background/60 hover:bg-accent/70"
               aria-label={t.theme}
             >
               {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
@@ -115,7 +126,8 @@ const Navbar = ({ language, setLanguage, theme, setTheme, selectedPlatform, setS
 
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden text-foreground"
+            className="md:hidden text-foreground rounded-lg border border-border/60 bg-card/70 p-2"
+            aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
           >
             {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
@@ -123,7 +135,7 @@ const Navbar = ({ language, setLanguage, theme, setTheme, selectedPlatform, setS
       </div>
 
       {mobileMenuOpen && (
-        <div className="md:hidden glass-effect border-t border-border/50">
+        <div className="md:hidden border-t border-border/60 bg-background/95 backdrop-blur-xl">
           <div className="px-4 py-4 space-y-3">
             <div className="grid grid-cols-2 gap-2">
               {platformOptions.map((platform) => {
@@ -140,7 +152,7 @@ const Navbar = ({ language, setLanguage, theme, setTheme, selectedPlatform, setS
                     className={
                       selectedPlatform === platform.id
                         ? 'platform-gradient platform-glow border-0 text-[hsl(var(--on-platform))]'
-                        : 'text-foreground'
+                        : 'text-foreground border-border/60 bg-background/60'
                     }
                   >
                     <Icon className="w-4 h-4 mr-1" />
@@ -174,9 +186,9 @@ const Navbar = ({ language, setLanguage, theme, setTheme, selectedPlatform, setS
                 variant="outline"
                 size="sm"
                 onClick={() => setLanguage(language === 'es' ? 'en' : 'es')}
-                className="text-foreground"
+                className="text-foreground border-border/70 bg-background/60"
               >
-                {t.lang}
+                {languageLabel}
               </Button>
               <Button
                 variant="outline"
