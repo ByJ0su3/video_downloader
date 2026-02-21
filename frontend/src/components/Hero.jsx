@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 import { FaYoutube, FaTwitter, FaInstagram, FaTwitch, FaTiktok } from 'react-icons/fa';
 
 const API_BASE_URL =
-  process.env.REACT_APP_API_URL || 'https://videodownloader-production-be1c.up.railway.app/api';
+  process.env.REACT_APP_API_URL || 'https://videodownloader-production-8194.up.railway.app/api';
 
 const platforms = [
   { id: 'youtube', name: 'YouTube', pattern: /youtube\.com|youtu\.be/i, icon: FaYoutube },
