@@ -217,14 +217,12 @@ const Hero = ({ selectedPlatform, setSelectedPlatform, language }) => {
       }
 
       const downloadPath = finalStatus?.downloadUrl || `/api/download/${jobId}/file`;
-      const absoluteUrl = downloadPath.startsWith('http') ? downloadPath : `${API_BASE_URL}${downloadPath.replace('/api', '')}`;
-      const link = document.createElement('a');
-      link.href = absoluteUrl;
-      link.setAttribute('download', finalStatus?.fileName || '');
-      link.rel = 'noopener';
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
+      let absoluteUrl = downloadPath;
+      if (!downloadPath.startsWith('http')) {
+        const apiUrl = new URL(API_BASE_URL);
+        absoluteUrl = `${apiUrl.origin}${downloadPath}`;
+      }
+      window.location.assign(absoluteUrl);
 
       toast.success(t.downloadStarted);
     } catch (error) {
